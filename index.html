@@ -1,982 +1,2041 @@
-
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>모야모야 - 모임 관리 서비스</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>모임 서비스</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Pretendard Font CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
+      rel="stylesheet" />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      body {
+        font-family: "Pretendard", sans-serif; /* Changed font to Pretendard */
+        background-color: #f0f2f5; /* Light gray background */
+        color: #333;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+      }
+      .container {
+        background-color: #ffffff;
+        border-radius: 1.5rem; /* More rounded corners */
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Softer, larger shadow */
+        width: 100%;
+        max-width: 960px; /* Max width for desktop */
+        margin: 2rem;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 80vh;
+      }
+      header {
+        background-color: #4285f4; /* Google Blue */
+        color: white;
+        padding: 1.5rem 2rem;
+        border-top-left-radius: 1.5rem;
+        border-top-right-radius: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        font-size: 1.5rem;
+      }
+      nav {
+        background-color: #e8f0fe; /* Light blue for nav */
+        padding: 0.5rem 2rem;
+        display: flex;
+        gap: 1rem;
+        border-bottom: 1px solid #d2e3fc;
+      }
+      nav button {
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.75rem;
+        font-weight: 500;
+        color: #4285f4;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+      }
+      nav button.active {
+        background-color: #4285f4;
+        color: white;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      nav button:hover:not(.active) {
+        background-color: #d2e3fc;
+      }
+      .content {
+        padding: 2rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        /* Added for smooth transitions */
+        transition: opacity 0.3s ease-in-out;
+      }
+      /* Styles for fade-out and fade-in animations */
+      .content.fade-out {
+        opacity: 0;
+      }
+      .content.fade-in {
+        opacity: 0; /* Start from invisible for fade-in */
+      }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8fafc;
-            color: #334155;
-        }
+      .card {
+        background-color: #ffffff;
+        border-radius: 1rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: transform 0.2s ease-in-out;
+        cursor: pointer;
+        border: 1px solid #e0e0e0;
+      }
+      .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      }
+      .card-title {
+        font-weight: 600;
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        color: #1a73e8; /* Google Blue */
+      }
+      .card-subtitle {
+        font-size: 0.9rem;
+        color: #616161;
+        margin-bottom: 0.75rem;
+      }
+      .card-text {
+        font-size: 1rem;
+        color: #424242;
+        line-height: 1.5;
+      }
 
+      /* Modal Styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+      }
+      .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+      }
+      .modal-content {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 1.5rem;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        width: 90%;
+        max-width: 500px;
+        transform: translateY(-20px);
+        opacity: 0;
+        transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        position: relative; /* For close button positioning */
+      }
+      .modal-overlay.show .modal-content {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+      .modal-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1a73e8;
+      }
+      .modal-close-button {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        color: #616161;
+        cursor: pointer;
+        transition: color 0.2s ease-in-out;
+      }
+      .modal-close-button:hover {
+        color: #333;
+      }
+      .modal-body label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #424242;
+      }
+      .modal-body input[type="text"],
+      .modal-body input[type="date"],
+      .modal-body input[type="time"],
+      .modal-body input[type="number"],
+      .modal-body textarea,
+      .modal-body select {
+        width: 100%;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        box-sizing: border-box;
+        transition: border-color 0.2s ease-in-out;
+      }
+      .modal-body input:focus,
+      .modal-body textarea:focus,
+      .modal-body select:focus {
+        outline: none;
+        border-color: #4285f4;
+        box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
+      }
+      .modal-body textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+      .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      .modal-footer button {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out,
+          box-shadow 0.2s ease-in-out;
+        border: none;
+      }
+      .modal-footer .btn-primary {
+        background-color: #4285f4;
+        color: white;
+        box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3);
+      }
+      .modal-footer .btn-primary:hover {
+        background-color: #357ae8;
+        box-shadow: 0 6px 15px rgba(66, 133, 244, 0.4);
+      }
+      .modal-footer .btn-secondary {
+        background-color: #e0e0e0;
+        color: #424242;
+      }
+      .modal-footer .btn-secondary:hover {
+        background-color: #c0c0c0;
+      }
+
+      /* General Buttons */
+      .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out,
+          box-shadow 0.2s ease-in-out;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+      .btn-blue {
+        background-color: #4285f4;
+        color: white;
+        box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3);
+      }
+      .btn-blue:hover {
+        background-color: #357ae8;
+        box-shadow: 0 6px 15px rgba(66, 133, 244, 0.4);
+      }
+      .btn-red {
+        background-color: #ea4335; /* Google Red */
+        color: white;
+        box-shadow: 0 4px 10px rgba(234, 67, 53, 0.3);
+      }
+      .btn-red:hover {
+        background-color: #d1392c;
+        box-shadow: 0 6px 15px rgba(234, 67, 53, 0.4);
+      }
+      .btn-green {
+        background-color: #34a853; /* Google Green */
+        color: white;
+        box-shadow: 0 4px 10px rgba(52, 168, 83, 0.3);
+      }
+      .btn-green:hover {
+        background-color: #2c8b46;
+        box-shadow: 0 6px 15px rgba(52, 168, 83, 0.4);
+      }
+      .btn-outline {
+        background-color: transparent;
+        color: #4285f4;
+        border: 1px solid #4285f4;
+        box-shadow: none;
+      }
+      .btn-outline:hover {
+        background-color: #e8f0fe;
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #eee;
+      }
+      .section-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #333;
+      }
+      .detail-item {
+        background-color: #f8f9fa;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e0e0e0;
+      }
+      .detail-item h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1a73e8;
+        margin-bottom: 0.5rem;
+      }
+      .detail-item p {
+        font-size: 1rem;
+        color: #424242;
+        margin-bottom: 0.5rem;
+        white-space: pre-wrap; /* Preserve whitespace and line breaks */
+      }
+      .detail-item ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .detail-item ul li {
+        padding: 0.25rem 0;
+        color: #424242;
+      }
+      .detail-item ul li strong {
+        color: #333;
+      }
+      .detail-item .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-left: 0.5rem;
+      }
+      .status-badge.possible {
+        background-color: #e6ffe6;
+        color: #34a853;
+      }
+      .status-badge.impossible {
+        background-color: #ffe6e6;
+        color: #ea4335;
+      }
+      .status-badge.pending {
+        background-color: #fffbe6;
+        color: #fbbc04;
+      }
+      .status-badge.paid {
+        background-color: #e6ffe6;
+        color: #34a853;
+      }
+      .status-badge.unpaid {
+        background-color: #ffe6e6;
+        color: #ea4335;
+      }
+      .status-badge.assigned {
+        background-color: #e8f0fe;
+        color: #4285f4;
+      }
+      .status-badge.unassigned {
+        background-color: #f0f2f5;
+        color: #616161;
+      }
+
+      .role-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+      .role-item {
+        background-color: #e8f0fe;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: #4285f4;
+        font-weight: 500;
+        border: 1px solid #d2e3fc;
+      }
+      .role-item strong {
+        display: block;
+        font-size: 1.1rem;
+        color: #1a73e8;
+        margin-bottom: 0.25rem;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
         .container {
-            display: flex;
-            min-height: 100vh;
+          margin: 1rem;
+          border-radius: 1rem;
         }
-
-        /* 사이드바 */
-        .sidebar {
-            width: 250px;
-            background: white;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
+        header {
+          padding: 1rem 1.5rem;
+          font-size: 1.25rem;
+          border-top-left-radius: 1rem;
+          border-top-right-radius: 1rem;
         }
-
-        .sidebar-header {
-            padding: 2rem 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
+        nav {
+          flex-wrap: wrap;
+          padding: 0.5rem 1.5rem;
         }
-
-        .sidebar-header h1 {
-            color: #4f46e5;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+        nav button {
+          flex-grow: 1;
+          text-align: center;
+          padding: 0.6rem 1rem;
+          font-size: 0.9rem;
         }
-
-        .sidebar-header p {
-            color: #64748b;
-            font-size: 0.875rem;
+        .content {
+          padding: 1.5rem;
         }
-
-        .sidebar-nav {
-            padding: 1rem 0;
-        }
-
-        .nav-item {
-            display: block;
-            padding: 0.875rem 1.5rem;
-            color: #475569;
-            text-decoration: none;
-            border-left: 3px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background-color: #f1f5f9;
-            color: #4f46e5;
-            border-left-color: #4f46e5;
-        }
-
-        .nav-item span {
-            margin-left: 0.75rem;
-        }
-
-        /* 메인 컨텐츠 */
-        .main-content {
-            flex: 1;
-            margin-left: 250px;
-            padding: 2rem 3rem;
-        }
-
-        .page-header {
-            margin-bottom: 2rem;
-        }
-
-        .page-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 0.5rem;
-        }
-
-        .page-subtitle {
-            color: #64748b;
-            font-size: 1rem;
-        }
-
-        /* 카드 그리드 */
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
         .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
+          padding: 1rem;
         }
-
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .card-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
         .card-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: #1e293b;
+          font-size: 1.1rem;
         }
-
-        .card-icon {
-            width: 24px;
-            height: 24px;
-            color: #4f46e5;
-        }
-
-        .card-content {
-            padding: 1.5rem;
-        }
-
-        .card-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .card-item:last-child {
-            border-bottom: none;
-        }
-
-        .card-item-info h4 {
-            font-weight: 500;
-            color: #1e293b;
-            margin-bottom: 0.25rem;
-        }
-
-        .card-item-info p {
-            font-size: 0.875rem;
-            color: #64748b;
-        }
-
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .status-confirmed {
-            background-color: #dcfce7;
-            color: #166534;
-        }
-
-        .status-pending {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-incomplete {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-
-        /* 버튼 */
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .btn-primary {
-            background-color: #4f46e5;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #4338ca;
-        }
-
-        .btn-secondary {
-            background-color: #e2e8f0;
-            color: #475569;
-        }
-
-        .btn-secondary:hover {
-            background-color: #cbd5e1;
-        }
-
-        /* 플로팅 액션 버튼 */
-        .fab {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 56px;
-            height: 56px;
-            background-color: #4f46e5;
-            border: none;
-            border-radius: 50%;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
-            transition: all 0.2s;
-        }
-
-        .fab:hover {
-            background-color: #4338ca;
-            transform: scale(1.1);
-        }
-
-        /* 모달 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
-
         .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
+          padding: 1.5rem;
+          border-radius: 1rem;
         }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
         .modal-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1e293b;
+          font-size: 1.5rem;
         }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #64748b;
+        .section-title {
+          font-size: 1.5rem;
         }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #374151;
-        }
-
-        .form-input, .form-textarea, .form-select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 0.875rem;
-        }
-
-        .form-textarea {
-            height: 100px;
-            resize: vertical;
-        }
-
-        /* 참여자 상태 */
-        .participants {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .participant {
-            padding: 0.25rem 0.75rem;
-            background-color: #f1f5f9;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            color: #475569;
-        }
-
-        /* 숨김 클래스 */
-        .hidden {
-            display: none !important;
-        }
-
-        /* 반응형 */
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s;
-            }
-            
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-            }
-            
-            .card-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <!-- 사이드바 -->
-        <nav class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h1>모야모야</h1>
-                <p>311 모임 · 행성이</p>
-            </div>
-            <div class="sidebar-nav">
-                <a href="#" class="nav-item active" data-page="dashboard">
-                    <span>📊 대시보드</span>
-                </a>
-                <a href="#" class="nav-item" data-page="meetings">
-                    <span>🤙🏽 약속</span>
-                </a>
-                <a href="#" class="nav-item" data-page="travels">
-                    <span>✈️ 여행</span>
-                </a>
-                <a href="#" class="nav-item" data-page="birthdays">
-                    <span>🎂 생일</span>
-                </a>
-                <a href="#" class="nav-item" data-page="fees">
-                    <span>💵 회비</span>
-                </a>
-            </div>
-        </nav>
-
-        <!-- 메인 컨텐츠 -->
-        <main class="main-content">
-            <!-- 대시보드 페이지 -->
-            <div id="dashboard-page" class="page">
-                <div class="page-header">
-                    <h1 class="page-title">311 모임 대시보드</h1>
-                    <p class="page-subtitle">모임의 모든 활동을 한눈에 확인하세요</p>
-                </div>
-
-                <div class="card-grid">
-                    <!-- 최근 약속 카드 -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">다가오는 약속</h3>
-                            <span class="card-icon">🤙🏽</span>
-                        </div>
-                        <div class="card-content">
-                            <div class="card-item">
-                                <div class="card-item-info">
-                                    <h4>311 정기 모임</h4>
-                                    <p>7/5 20:00 · 오목교 경성주막</p>
-                                </div>
-                                <span class="status-badge status-pending">대기중</span>
-                            </div>
-                            <div class="card-item">
-                                <div class="card-item-info">
-                                    <h4>연말 파티</h4>
-                                    <p>12/28 20:00 · 홍대 파티룸</p>
-                                </div>
-                                <span class="status-badge status-confirmed">참여확정</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 진행중인 여행 카드 -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">진행중인 여행</h3>
-                            <span class="card-icon">✈️</span>
-                        </div>
-                        <div class="card-content">
-                            <div class="card-item">
-                                <div class="card-item-info">
-                                    <h4>베트남 다낭</h4>
-                                    <p>6/27~7/1 · 관광 담당</p>
-                                </div>
-                                <span class="status-badge status-confirmed">준비완료</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 다가오는 생일 카드 -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">다가오는 생일</h3>
-                            <span class="card-icon">🎂</span>
-                        </div>
-                        <div class="card-content">
-                            <div class="card-item">
-                                <div class="card-item-info">
-                                    <h4>이유진</h4>
-                                    <p>10/30 · 담당자 미정</p>
-                                </div>
-                                <span class="status-badge status-pending">대기중</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 회비 현황 카드 -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">회비 현황</h3>
-                            <span class="card-icon">💵</span>
-                        </div>
-                        <div class="card-content">
-                            <div class="card-item">
-                                <div class="card-item-info">
-                                    <h4>정기 회비</h4>
-                                    <p>20,000원 · 2/4명 납부</p>
-                                </div>
-                                <span class="status-badge status-incomplete">미납</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 약속 페이지 -->
-            <div id="meetings-page" class="page hidden">
-                <div class="page-header">
-                    <h1 class="page-title">약속 관리</h1>
-                    <p class="page-subtitle">모임 약속을 생성하고 참여 여부를 관리하세요</p>
-                </div>
-
-                <div class="card-grid">
-                    <div class="card" id="meeting-regular">
-                        <div class="card-header">
-                            <h3 class="card-title">311 정기 모임</h3>
-                        </div>
-                        <div class="card-content">
-                            <p><strong>일시:</strong> 7/5 20:00</p>
-                            <p><strong>장소:</strong> 오목교 경성주막</p>
-                            <p><strong>생성자:</strong> 김수린</p>
-                            <div class="participants">
-                                <span class="participant">김수린 ✓</span>
-                                <span class="participant">남보령 ✓</span>
-                                <span class="participant" id="regular-me">행성이 ?</span>
-                                <span class="participant">김시원 ?</span>
-                            </div>
-                            <div style="margin-top: 1rem;" id="regular-buttons">
-                                <button class="btn btn-primary" onclick="participateMeeting('regular')">참여</button>
-                                <button class="btn btn-secondary" onclick="declineMeeting('regular')">불참</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card" id="meeting-party">
-                        <div class="card-header">
-                            <h3 class="card-title">연말 파티</h3>
-                        </div>
-                        <div class="card-content">
-                            <p><strong>일시:</strong> 12/28 20:00</p>
-                            <p><strong>장소:</strong> 홍대 파티룸</p>
-                            <p><strong>생성자:</strong> 김수린</p>
-                            <div class="participants">
-                                <span class="participant">김수린 ✓</span>
-                                <span class="participant">남보령 ✓</span>
-                                <span class="participant">김시원 ✓</span>
-                                <span class="participant">이유진 ✓</span>
-                                <span class="participant" id="party-me">행성이 ✓</span>
-                            </div>
-                            <div style="margin-top: 1rem;">
-                                <span class="status-badge status-confirmed">참여 확정</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <button class="fab" onclick="openModal('meeting-modal')" title="새 약속 만들기">+</button>
-            </div>
-
-            <!-- 여행 페이지 -->
-            <div id="travels-page" class="page hidden">
-                <div class="page-header">
-                    <h1 class="page-title">여행 관리</h1>
-                    <p class="page-subtitle">여행 계획과 역할 분담을 관리하세요</p>
-                </div>
-
-                <div class="card-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">베트남 다낭</h3>
-                        </div>
-                        <div class="card-content">
-                            <p><strong>일정:</strong> 6/27~7/1 (4박 5일)</p>
-                            <div style="margin-top: 1rem;">
-                                <h4 style="margin-bottom: 0.5rem;">역할 분담:</h4>
-                                <div class="card-item">
-                                    <span>숙소 - 김수린</span>
-                                    <span class="status-badge status-confirmed">완료</span>
-                                </div>
-                                <div class="card-item">
-                                    <span>관광 - 행성이</span>
-                                    <span class="status-badge status-confirmed" id="tourism-status">완료</span>
-                                </div>
-                                <div class="card-item">
-                                    <span>장보기 - 이유진</span>
-                                    <span class="status-badge status-pending">대기</span>
-                                </div>
-                                <div class="card-item">
-                                    <span>총무 - 김시원</span>
-                                    <span class="status-badge status-pending">대기</span>
-                                </div>
-                                <div class="card-item">
-                                    <span>맛집 찾기 - 남보령</span>
-                                    <span class="status-badge status-pending">대기</span>
-                                </div>
-                            </div>
-                            <div style="margin-top: 1rem;">
-                                <button class="btn btn-primary" onclick="viewTravelDetail()">상세 보기</button>
-                                <button class="btn btn-secondary" onclick="editMyRole()">내 역할 수정</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <button class="fab" onclick="openModal('travel-modal')" title="새 여행 만들기">+</button>
-            </div>
-
-            <!-- 생일 페이지 -->
-            <div id="birthdays-page" class="page hidden">
-                <div class="page-header">
-                    <h1 class="page-title">생일 관리</h1>
-                    <p class="page-subtitle">생일 담당자를 지정하고 준비 현황을 확인하세요</p>
-                </div>
-
-                <div class="card-grid">
-                    <div class="card" id="birthday-yujin">
-                        <div class="card-header">
-                            <h3 class="card-title">이유진 생일</h3>
-                        </div>
-                        <div class="card-content">
-                            <p><strong>생일:</strong> 10/30</p>
-                            <p><strong>담당자:</strong> <span id="yujin-manager">미정</span></p>
-                            <div style="margin-top: 1rem;" id="yujin-button">
-                                <button class="btn btn-primary" onclick="assignBirthdayManager('yujin')">담당자 랜덤 지정</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card" id="birthday-surin">
-                        <div class="card-header">
-                            <h3 class="card-title">김수린 생일</h3>
-                        </div>
-                        <div class="card-content">
-                            <p><strong>생일:</strong> 11/5</p>
-                            <p><strong>담당자:</strong> <span id="surin-manager">미정</span></p>
-                            <div style="margin-top: 1rem;" id="surin-button">
-                                <button class="btn btn-primary" onclick="assignBirthdayManager('surin')">담당자 랜덤 지정</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card" id="birthday-siwon">
-                        <div class="card-header">
-                            <h3 class="card-title">김시원 생일</h3>
-                        </div>
-                        <div class="card-content">
-                            <p><strong>생일:</strong> 2/26</p>
-                            <p><strong>담당자:</strong> <span id="siwon-manager">미정</span></p>
-                            <div style="margin-top: 1rem;" id="siwon-button">
-                                <button class="btn btn-primary" onclick="assignBirthdayManager('siwon')">담당자 랜덤 지정</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card" id="birthday-boryeong">
-                        <div class="card-header">
-                            <h3 class="card-title">남보령 생일</h3>
-                        </div>
-                        <div class="card-content">
-                            <p><strong>생일:</strong> 3/17</p>
-                            <p><strong>담당자:</strong> <span id="boryeong-manager">미정</span></p>
-                            <div style="margin-top: 1rem;" id="boryeong-button">
-                                <button class="btn btn-primary" onclick="assignBirthdayManager('boryeong')">담당자 랜덤 지정</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 회비 페이지 -->
-            <div id="fees-page" class="page hidden">
-                <div class="page-header">
-                    <h1 class="page-title">회비 관리</h1>
-                    <p class="page-subtitle">회비 납부 현황을 확인하고 관리하세요</p>
-                </div>
-
-                <div class="card-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">정기 회비</h3>
-                        </div>
-                        <div class="card-content">
-                            <p><strong>금액:</strong> 20,000원</p>
-                            <p><strong>마감일:</strong> 매월 말일</p>
-                            <div style="margin-top: 1rem;">
-                                <h4 style="margin-bottom: 0.5rem;">납부 현황:</h4>
-                                <div class="card-item">
-                                    <span>김수린</span>
-                                    <span class="status-badge status-confirmed">완료</span>
-                                </div>
-                                <div class="card-item">
-                                    <span>남보령</span>
-                                    <span class="status-badge status-confirmed">완료</span>
-                                </div>
-                                <div class="card-item">
-                                    <span>행성이</span>
-                                    <span class="status-badge status-incomplete" id="my-fee-status">미납</span>
-                                </div>
-                                <div class="card-item">
-                                    <span>김시원</span>
-                                    <span class="status-badge status-incomplete">미납</span>
-                                </div>
-                            </div>
-                            <div style="margin-top: 1rem;" id="fee-button">
-                                <button class="btn btn-primary" onclick="submitFee()">납부 완료</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <button class="fab" onclick="openModal('fee-modal')" title="새 회비 만들기">+</button>
-            </div>
-        </main>
+  </head>
+  <body>
+    <div id="app" class="container">
+      <!-- Header will be dynamically loaded -->
+      <!-- Navigation will be dynamically loaded -->
+      <div id="content" class="content">
+        <!-- Content will be dynamically loaded -->
+      </div>
     </div>
 
-    <!-- 약속 생성 모달 -->
-    <div id="meeting-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">새 약속 만들기</h2>
-                <button class="close-btn" onclick="closeModal('meeting-modal')">&times;</button>
-            </div>
-            <form id="meeting-form">
-                <div class="form-group">
-                    <label class="form-label">약속 이름</label>
-                    <input type="text" class="form-input" placeholder="약속 이름을 입력하세요">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">날짜</label>
-                    <input type="date" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">시간</label>
-                    <input type="time" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">장소</label>
-                    <input type="text" class="form-input" placeholder="만날 장소를 입력하세요">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">메모</label>
-                    <textarea class="form-textarea" placeholder="추가 정보나 메모를 입력하세요"></textarea>
-                </div>
-                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">약속 만들기</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('meeting-modal')">취소</button>
-                </div>
-            </form>
+    <!-- Modals moved outside the #app container to ensure they are always in DOM -->
+    <!-- Meeting Create Modal -->
+    <div id="meetingCreateModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">새 약속 생성</h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('meetingCreateModal')">
+            &times;
+          </button>
         </div>
+        <div class="modal-body">
+          <label for="meetingName">약속 이름</label>
+          <input
+            type="text"
+            id="meetingName"
+            placeholder="예: 311 정기 모임"
+            required />
+
+          <label for="meetingDate">날짜</label>
+          <input type="date" id="meetingDate" required />
+
+          <label for="meetingTime">시간</label>
+          <input type="time" id="meetingTime" required />
+
+          <label for="meetingPlace">장소</label>
+          <input
+            type="text"
+            id="meetingPlace"
+            placeholder="예: 오목교 경성주막"
+            required />
+
+          <label for="meetingMemo">메모 (선택 사항)</label>
+          <textarea
+            id="meetingMemo"
+            rows="3"
+            placeholder="추가 설명"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-secondary"
+            onclick="closeModal('meetingCreateModal')">
+            취소
+          </button>
+          <button class="btn-primary" onclick="createMeeting()">저장</button>
+        </div>
+      </div>
     </div>
 
-    <!-- 여행 생성 모달 -->
-    <div id="travel-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">새 여행 만들기</h2>
-                <button class="close-btn" onclick="closeModal('travel-modal')">&times;</button>
-            </div>
-            <form id="travel-form">
-                <div class="form-group">
-                    <label class="form-label">여행 이름</label>
-                    <input type="text" class="form-input" placeholder="여행 이름을 입력하세요">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">출발일</label>
-                    <input type="date" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">도착일</label>
-                    <input type="date" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">여행지</label>
-                    <input type="text" class="form-input" placeholder="여행지를 입력하세요">
-                </div>
-                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">여행 만들기</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('travel-modal')">취소</button>
-                </div>
-            </form>
+    <!-- Meeting Participate/Decline Modal -->
+    <div id="meetingParticipateModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="participateModalTitle">약속 참여/불참</h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('meetingParticipateModal')">
+            &times;
+          </button>
         </div>
+        <div class="modal-body">
+          <p id="participateMeetingName" class="text-lg font-semibold mb-4"></p>
+          <label for="declineReason" class="hidden" id="declineReasonLabel"
+            >불참 사유</label
+          >
+          <textarea
+            id="declineReason"
+            rows="3"
+            placeholder="불참 사유를 입력해주세요."
+            class="hidden"></textarea>
+        </div>
+        <div class="modal-footer" id="participateModalFooter">
+          <!-- Buttons will be dynamically managed -->
+          <button
+            class="btn-red"
+            id="declineButton"
+            onclick="showDeclineReasonInput()">
+            불참
+          </button>
+          <button
+            class="btn-green"
+            id="participateButton"
+            onclick="handleMeetingParticipation('가능')">
+            참여
+          </button>
+          <button
+            class="btn-primary hidden"
+            id="confirmDeclineButton"
+            onclick="handleMeetingParticipation('불참')">
+            확인
+          </button>
+          <button
+            class="btn-secondary hidden"
+            id="cancelDeclineButton"
+            onclick="hideDeclineReasonInput()">
+            취소
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- 회비 생성 모달 -->
-    <div id="fee-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">새 회비 만들기</h2>
-                <button class="close-btn" onclick="closeModal('fee-modal')">&times;</button>
-            </div>
-            <form id="fee-form">
-                <div class="form-group">
-                    <label class="form-label">회비 항목</label>
-                    <input type="text" class="form-input" placeholder="회비 항목을 입력하세요">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">금액</label>
-                    <input type="number" class="form-input" placeholder="금액을 입력하세요">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">마감일</label>
-                    <input type="date" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">벌칙</label>
-                    <input type="text" class="form-input" placeholder="미납 시 벌칙을 입력하세요">
-                </div>
-                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">회비 만들기</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('fee-modal')">취소</button>
-                </div>
-            </form>
+    <!-- Travel Create Modal -->
+    <div id="travelCreateModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">새 여행 일정 생성</h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('travelCreateModal')">
+            &times;
+          </button>
         </div>
+        <div class="modal-body">
+          <label for="travelName">여행 제목</label>
+          <input
+            type="text"
+            id="travelName"
+            placeholder="예: 베트남 다낭"
+            required />
+
+          <label for="travelStartDate">시작 날짜</label>
+          <input type="date" id="travelStartDate" required />
+
+          <label for="travelEndDate">종료 날짜</label>
+          <input type="date" id="travelEndDate" required />
+
+          <label for="travelMemo">메모 (선택 사항)</label>
+          <textarea id="travelMemo" rows="3" placeholder="추가 설명"></textarea>
+
+          <h3 class="font-semibold text-lg mt-4 mb-2 text-gray-700">
+            역할 분담
+          </h3>
+          <div id="roleAssignmentContainer">
+            <!-- Roles will be dynamically added here -->
+          </div>
+          <button class="btn btn-outline w-full mt-4" onclick="addRoleInput()">
+            + 역할 추가
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-secondary"
+            onclick="closeModal('travelCreateModal')">
+            취소
+          </button>
+          <button class="btn-primary" onclick="createTravel()">저장</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Travel Role Edit Modal -->
+    <div id="travelRoleEditModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="travelRoleEditModalTitle">
+            역할 내용 수정
+          </h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('travelRoleEditModal')">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <label for="travelRoleContent">내용</label>
+          <textarea
+            id="travelRoleContent"
+            rows="10"
+            placeholder="담당한 역할에 대한 내용을 입력해주세요."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-secondary"
+            onclick="closeModal('travelRoleEditModal')">
+            취소
+          </button>
+          <button class="btn-primary" onclick="saveTravelRoleContent()">
+            저장
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Birthday Assign Modal -->
+    <div id="birthdayAssignModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">생일 담당자 지정</h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('birthdayAssignModal')">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <p id="birthdayAssignInfo" class="text-lg mb-4 text-gray-700"></p>
+          <p class="text-md text-gray-600">
+            선택된 담당자: <strong id="assignedBirthdayPerson">미지정</strong>
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-secondary"
+            onclick="closeModal('birthdayAssignModal')">
+            취소
+          </button>
+          <button class="btn-primary" onclick="assignBirthdayHandler()">
+            담당자 지정
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Birthday Prepare Modal -->
+    <div id="birthdayPrepareModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="birthdayPrepareModalTitle">
+            생일 준비 현황 공유
+          </h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('birthdayPrepareModal')">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <label for="birthdayPreparationContent">준비 현황</label>
+          <textarea
+            id="birthdayPreparationContent"
+            rows="10"
+            placeholder="선물 후보, 케이크 옵션 등을 공유해주세요."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-secondary"
+            onclick="closeModal('birthdayPrepareModal')">
+            취소
+          </button>
+          <button class="btn-primary" onclick="saveBirthdayPreparation()">
+            저장
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expense Create Modal -->
+    <div id="expenseCreateModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">새 회비 항목 생성</h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('expenseCreateModal')">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <label for="expenseName">회비 항목 이름</label>
+          <input
+            type="text"
+            id="expenseName"
+            placeholder="예: 이번 여행 회비"
+            required />
+
+          <label for="expenseAmount">금액 (원)</label>
+          <input
+            type="number"
+            id="expenseAmount"
+            placeholder="예: 20000"
+            required />
+
+          <label for="expenseDeadline">마감일</label>
+          <input type="date" id="expenseDeadline" required />
+
+          <label for="expensePenalty">벌칙 (선택 사항)</label>
+          <input
+            type="text"
+            id="expensePenalty"
+            placeholder="예: 미납 시 다음 약속 커피 사기" />
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-secondary"
+            onclick="closeModal('expenseCreateModal')">
+            취소
+          </button>
+          <button class="btn-primary" onclick="createExpense()">저장</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message Box Modal (for alerts) -->
+    <div id="messageBoxModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="messageBoxTitle">알림</h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('messageBoxModal')">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <p id="messageBoxContent" class="text-lg text-gray-700"></p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" onclick="closeModal('messageBoxModal')">
+            확인
+          </button>
+        </div>
+      </div>
     </div>
 
     <script>
-        console.log('JavaScript loaded');
-        
-        // 페이지 네비게이션
-        function showPage(pageId) {
-            console.log('Showing page:', pageId);
-            // 모든 페이지 숨기기
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.add('hidden');
-            });
-            
-            // 선택된 페이지 보이기
-            document.getElementById(pageId + '-page').classList.remove('hidden');
-            
-            // 네비게이션 활성화
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            document.querySelector(`[data-page="${pageId}"]`).classList.add('active');
-        }
+      // Mock Data
+      const mockData = {
+        currentUser: {
+          id: "user-hangseong-i",
+          name: "행성이",
+          birthday: "1999-07-01",
+        },
+        users: [
+          { id: "user-soorin", name: "김수린", birthday: "1999-11-05" },
+          { id: "user-siwon", name: "김시원", birthday: "1999-02-26" },
+          { id: "user-yujin", name: "이유진", birthday: "1999-10-30" },
+          { id: "user-boryeong", name: "남보령", birthday: "1999-03-17" },
+          { id: "user-hangseong-i", name: "행성이", birthday: "1999-07-01" },
+          { id: "user-gyeongmin", name: "고경민", birthday: "1999-01-01" },
+          { id: "user-hyeyun", name: "혜윤", birthday: "1999-01-02" },
+          { id: "user-jaeyi", name: "재이", birthday: "1999-01-03" },
+          { id: "user-jisu", name: "지수", birthday: "1999-01-04" },
+        ],
+        groups: [
+          {
+            id: "group-311",
+            name: "311",
+            members: [
+              "user-soorin",
+              "user-siwon",
+              "user-yujin",
+              "user-boryeong",
+              "user-hangseong-i",
+              "user-gyeongmin",
+              "user-hyeyun",
+              "user-jaeyi",
+              "user-jisu",
+            ],
+            meetings: [
+              {
+                id: "meeting-1",
+                name: "311 정기 모임",
+                date: "2025-07-05",
+                time: "20:00",
+                place: "오목교 경성주막",
+                memo: "",
+                creator: "김수린",
+                participants: [
+                  { userId: "user-soorin", status: "가능", reason: "" },
+                  { userId: "user-boryeong", status: "가능", reason: "" },
+                  { userId: "user-hangseong-i", status: "미정", reason: "" }, // Current user initial status
+                ],
+              },
+              {
+                id: "meeting-2",
+                name: "연말 파티",
+                date: "2025-12-28",
+                time: "20:00",
+                place: "홍대 파티룸",
+                memo: "",
+                creator: "김수린",
+                participants: [
+                  { userId: "user-soorin", status: "가능", reason: "" },
+                  { userId: "user-boryeong", status: "가능", reason: "" },
+                  { userId: "user-siwon", status: "가능", reason: "" },
+                  { userId: "user-yujin", status: "가능", reason: "" },
+                  { userId: "user-hangseong-i", status: "미정", reason: "" }, // Current user initial status
+                ],
+              },
+            ],
+            travels: [
+              {
+                id: "travel-1",
+                name: "베트남 다낭",
+                startDate: "2025-06-27",
+                endDate: "2025-07-01",
+                memo: "",
+                roles: [
+                  {
+                    name: "숙소",
+                    assignedTo: "user-soorin",
+                    content: `🏨 다낭 호텔 정리\n\n📍네스타호텔 6/27~28 (1박)\nhttps://maps.app.goo.gl/cDvcXLRYXCg6EBHJA?g_st=com.google.maps.preview.copy\n📍코지다낭 부티크 호텔 6/28~30 (2박)\nhttps://maps.app.goo.gl/zq9Q3Mt6SqVzhSBy8?g_st=com.google.maps.preview.copy\n\n✔️호텔은 2명씩 방 4개 예약\n✔️네스타는 해안쪽, 코지다낭은 도심쪽\n✔️아고다로 예약, 캐쉬백은 들어오는데로 환급 예정`,
+                  },
+                  {
+                    name: "관광",
+                    assignedTo: "user-hangseong-i",
+                    content: `🚐인천공항까지 가는 콜벤🚐\n\n1) 당산역에서 오전 2시 (김시원, 고경민)\n2) 목동 41타워에서 오전 2시 10분 (남보령, 혜윤, 재이, 김수린, 지수)\n3) 목동고에서 오전 2시 20분 (이유진)\n\n*절대 늦지 말고 시간 엄수!! 2),3)에서 타는 사람들은 5분씩 일찍 와서 기다리자~!!\n\n* 금액: 175,000원 (1인당 21,875원)`,
+                  },
+                  { name: "장보기", assignedTo: "user-yujin", content: "" },
+                  { name: "총무", assignedTo: "user-siwon", content: "" },
+                  {
+                    name: "맛집 찾기",
+                    assignedTo: "user-boryeong",
+                    content: "",
+                  },
+                ],
+              },
+            ],
+            birthdays: [
+              {
+                userId: "user-soorin",
+                date: "11-05",
+                assignedTo: null,
+                preparation: "",
+              },
+              {
+                userId: "user-siwon",
+                date: "02-26",
+                assignedTo: null,
+                preparation: "",
+              },
+              {
+                userId: "user-yujin",
+                date: "10-30",
+                assignedTo: null,
+                preparation: "",
+              },
+              {
+                userId: "user-boryeong",
+                date: "03-17",
+                assignedTo: null,
+                preparation: "",
+              },
+            ],
+            expenses: [
+              {
+                id: "expense-1",
+                name: "정기 회비",
+                amount: 20000,
+                deadline: "2025-07-31",
+                penalty: "다음 약속 커피 사기",
+                payers: [
+                  { userId: "user-soorin", paid: true },
+                  { userId: "user-boryeong", paid: true },
+                  { userId: "user-hangseong-i", paid: false }, // Current user initial status
+                ],
+              },
+            ],
+            birthdayAssignmentHistory: [], // To track who has been assigned for birthdays
+          },
+        ],
+      };
 
-        // 네비게이션 이벤트 리스너
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const pageId = item.getAttribute('data-page');
-                console.log('Nav clicked:', pageId);
-                showPage(pageId);
-            });
+      // Global state variables
+      let currentGroup = null;
+      let currentTab = "meetings"; // Default tab
+      let selectedMeetingId = null; // For meeting participation modal
+      let selectedTravelId = null; // For travel role edit modal
+      let selectedTravelRoleName = null; // For travel role edit modal
+      let selectedBirthdayUserId = null; // For birthday prepare modal
+      let selectedExpenseId = null; // For expense submission
+
+      // Utility function to get user name by ID
+      function getUserNameById(userId) {
+        const user = mockData.users.find((u) => u.id === userId);
+        return user ? user.name : "알 수 없음";
+      }
+
+      // Utility function to get user ID by name
+      function getUserIdByName(userName) {
+        const user = mockData.users.find((u) => u.name === userName);
+        return user ? user.id : null;
+      }
+
+      // Utility function to generate unique IDs
+      function generateUniqueId(prefix) {
+        return (
+          prefix +
+          "-" +
+          Date.now() +
+          "-" +
+          Math.random().toString(36).substr(2, 9)
+        );
+      }
+
+      // --- Modal Functions ---
+      function openModal(modalId, callback = null) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.classList.add("show");
+          if (callback) callback();
+        }
+      }
+
+      function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.classList.remove("show");
+        }
+      }
+
+      function showMessageBox(title, message) {
+        document.getElementById("messageBoxTitle").textContent = title;
+        document.getElementById("messageBoxContent").textContent = message;
+        openModal("messageBoxModal");
+      }
+
+      // --- View Rendering Functions ---
+
+      // Renders the initial group list page
+      function renderGroupList() {
+        const appDiv = document.getElementById("app");
+        appDiv.innerHTML = `
+                <header>
+                    <h1>모임 서비스</h1>
+                    <span class="text-xl">환영합니다, ${mockData.currentUser.name}님!</span>
+                </header>
+                <div id="content" class="content fade-in">
+                    <h2 class="section-title mb-6">내 모임</h2>
+                    <div id="groupList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Group cards will be rendered here -->
+                    </div>
+                </div>
+            `;
+
+        const groupListDiv = document.getElementById("groupList");
+        mockData.groups.forEach((group) => {
+          const groupCard = document.createElement("div");
+          groupCard.className = "card cursor-pointer";
+          groupCard.innerHTML = `
+                    <div class="card-title">${group.name}</div>
+                    <div class="card-subtitle">멤버 수: ${group.members.length}명</div>
+                    <p class="card-text">친구들과의 약속, 여행, 생일, 회비를 한 곳에서 관리하세요!</p>
+                `;
+          groupCard.onclick = () => selectGroup(group.id);
+          groupListDiv.appendChild(groupCard);
         });
 
-        // 모달 관리
-        function openModal(modalId) {
-            console.log('Opening modal:', modalId);
-            document.getElementById(modalId).style.display = 'block';
+        // Trigger fade-in for the initial content
+        const contentDiv = document.getElementById("content");
+        setTimeout(() => {
+          contentDiv.classList.remove("fade-in");
+        }, 10); // Small delay to ensure transition applies
+      }
+
+      // Selects a group and renders its detail page
+      function selectGroup(groupId) {
+        currentGroup = mockData.groups.find((g) => g.id === groupId);
+        if (currentGroup) {
+          renderGroupDetail();
+        } else {
+          showMessageBox("오류", "모임을 찾을 수 없습니다.");
+        }
+      }
+
+      // Renders the group detail page with tabs
+      function renderGroupDetail() {
+        const appDiv = document.getElementById("app");
+        appDiv.innerHTML = `
+                <header>
+                    <h1>${currentGroup.name} 모임</h1>
+                    <span class="text-xl">환영합니다, ${mockData.currentUser.name}님!</span>
+                </header>
+                <nav id="mainNav">
+                    <button id="nav-meetings" onclick="changeTab('meetings')">🗓️ 약속</button>
+                    <button id="nav-travels" onclick="changeTab('travels')">✈️ 여행</button>
+                    <button id="nav-birthdays" onclick="changeTab('birthdays')">🎁 생일</button>
+                    <button id="nav-expenses" onclick="changeTab('expenses')">💰 회비</button>
+                </nav>
+                <div id="content" class="content fade-in">
+                    <!-- Tab content will be rendered here -->
+                </div>
+            `;
+        changeTab(currentTab); // Render the initial tab content
+
+        // Trigger fade-in for the group detail content
+        const contentDiv = document.getElementById("content");
+        setTimeout(() => {
+          contentDiv.classList.remove("fade-in");
+        }, 10); // Small delay to ensure transition applies
+      }
+
+      // Changes the active tab and renders its content with fade animation
+      function changeTab(tabName) {
+        currentTab = tabName;
+        const navButtons = document.querySelectorAll("#mainNav button");
+        navButtons.forEach((button) => {
+          button.classList.remove("active");
+        });
+        document.getElementById(`nav-${tabName}`).classList.add("active");
+
+        const contentDiv = document.getElementById("content");
+
+        // Add fade-out effect
+        contentDiv.classList.add("fade-out");
+
+        // Use a small timeout to ensure fade-out transition starts before content replacement
+        setTimeout(() => {
+          // Clear previous content
+          contentDiv.innerHTML = "";
+
+          // Render new content based on the selected tab
+          switch (tabName) {
+            case "meetings":
+              renderMeetings();
+              break;
+            case "travels":
+              renderTravels();
+              break;
+            case "birthdays":
+              renderBirthdays();
+              break;
+            case "expenses":
+              renderExpenses();
+              break;
+          }
+
+          // Ensure new content starts invisible for fade-in
+          contentDiv.classList.add("fade-in");
+
+          // Force reflow for the newly rendered content
+          void contentDiv.offsetWidth;
+
+          // Remove fade-out and trigger fade-in
+          contentDiv.classList.remove("fade-out");
+          contentDiv.classList.remove("fade-in"); // This will trigger the transition to opacity: 1
+        }, 300); // Match this timeout with the CSS transition duration (0.3s)
+      }
+
+      // --- Meetings Tab Functions ---
+      function renderMeetings() {
+        const contentDiv = document.getElementById("content");
+        contentDiv.innerHTML = `
+                <div class="section-header">
+                    <h2 class="section-title">🗓️ 약속 목록</h2>
+                    <button class="btn btn-blue" onclick="openModal('meetingCreateModal')">약속 생성</button>
+                </div>
+                <div id="meetingsList">
+                    <!-- Meetings will be listed here -->
+                </div>
+            `;
+
+        const meetingsListDiv = document.getElementById("meetingsList");
+        if (currentGroup.meetings.length === 0) {
+          meetingsListDiv.innerHTML =
+            '<p class="text-gray-600">아직 등록된 약속이 없습니다.</p>';
+          return;
         }
 
-        function closeModal(modalId) {
-            console.log('Closing modal:', modalId);
-            document.getElementById(modalId).style.display = 'none';
+        currentGroup.meetings.forEach((meeting) => {
+          const userParticipation = meeting.participants.find(
+            (p) => p.userId === mockData.currentUser.id
+          );
+          const statusText = userParticipation
+            ? userParticipation.status
+            : "미정";
+          const statusClass = {
+            가능: "possible",
+            불참: "impossible",
+            미정: "pending",
+          }[statusText];
+
+          const meetingCard = document.createElement("div");
+          meetingCard.className = "card";
+          meetingCard.innerHTML = `
+                    <div class="card-title">${meeting.name}</div>
+                    <div class="card-subtitle">${meeting.date} ${
+            meeting.time
+          } | ${meeting.place}</div>
+                    <p class="card-text">
+                        참여 현황: ${
+                          meeting.participants
+                            .filter((p) => p.status === "가능")
+                            .map((p) => getUserNameById(p.userId))
+                            .join(", ") || "없음"
+                        }
+                        <span class="status-badge ${statusClass}">내 상태: ${statusText}</span>
+                    </p>
+                    <div class="flex gap-2 mt-4">
+                        <button class="btn btn-outline" onclick="viewMeetingDetails('${
+                          meeting.id
+                        }')">상세 보기</button>
+                        <button class="btn btn-green" onclick="openMeetingParticipateModal('${
+                          meeting.id
+                        }')">참여/불참</button>
+                    </div>
+                `;
+          meetingsListDiv.appendChild(meetingCard);
+        });
+      }
+
+      function viewMeetingDetails(meetingId) {
+        const meeting = currentGroup.meetings.find((m) => m.id === meetingId);
+        if (!meeting) {
+          showMessageBox("오류", "약속을 찾을 수 없습니다.");
+          return;
         }
 
-        // 모달 외부 클릭 시 닫기
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                e.target.style.display = 'none';
+        let participantsHtml = "<ul>";
+        currentGroup.members.forEach((memberId) => {
+          const participant = meeting.participants.find(
+            (p) => p.userId === memberId
+          );
+          const status = participant ? participant.status : "미정";
+          const reason =
+            participant && participant.reason
+              ? ` (사유: ${participant.reason})`
+              : "";
+          const statusClass = {
+            가능: "possible",
+            불참: "impossible",
+            미정: "pending",
+          }[status];
+          participantsHtml += `<li><strong>${getUserNameById(
+            memberId
+          )}</strong>: <span class="status-badge ${statusClass}">${status}</span>${reason}</li>`;
+        });
+        participantsHtml += "</ul>";
+
+        const contentDiv = document.getElementById("content");
+        contentDiv.innerHTML = `
+                <div class="section-header">
+                    <h2 class="section-title">🗓️ ${meeting.name} 상세</h2>
+                    <button class="btn btn-outline" onclick="changeTab('meetings')">목록으로 돌아가기</button>
+                </div>
+                <div class="detail-item">
+                    <h3>약속 정보</h3>
+                    <p><strong>날짜:</strong> ${meeting.date}</p>
+                    <p><strong>시간:</strong> ${meeting.time}</p>
+                    <p><strong>장소:</strong> ${meeting.place}</p>
+                    <p><strong>생성자:</strong> ${meeting.creator}</p>
+                    <p><strong>메모:</strong> ${meeting.memo || "없음"}</p>
+                </div>
+                <div class="detail-item">
+                    <h3>참여 현황</h3>
+                    ${participantsHtml}
+                </div>
+                <div class="flex gap-2 mt-4">
+                    <button class="btn btn-green" onclick="openMeetingParticipateModal('${
+                      meeting.id
+                    }')">내 참여 상태 변경</button>
+                </div>
+            `;
+      }
+
+      function createMeeting() {
+        const name = document.getElementById("meetingName").value;
+        const date = document.getElementById("meetingDate").value;
+        const time = document.getElementById("meetingTime").value;
+        const place = document.getElementById("meetingPlace").value;
+        const memo = document.getElementById("meetingMemo").value;
+
+        if (!name || !date || !time || !place) {
+          showMessageBox(
+            "필수 정보 누락",
+            "약속 이름, 날짜, 시간, 장소는 필수 입력 사항입니다."
+          );
+          return;
+        }
+
+        const newMeeting = {
+          id: generateUniqueId("meeting"),
+          name,
+          date,
+          time,
+          place,
+          memo,
+          creator: mockData.currentUser.name,
+          participants: currentGroup.members.map((userId) => ({
+            userId: userId,
+            status: userId === mockData.currentUser.id ? "가능" : "미정", // Default current user to '가능'
+            reason: "",
+          })),
+        };
+
+        currentGroup.meetings.push(newMeeting);
+        closeModal("meetingCreateModal");
+        showMessageBox("성공", "새 약속이 생성되었습니다.");
+        renderMeetings();
+      }
+
+      function openMeetingParticipateModal(meetingId) {
+        selectedMeetingId = meetingId;
+        const meeting = currentGroup.meetings.find((m) => m.id === meetingId);
+        if (!meeting) {
+          showMessageBox("오류", "약속을 찾을 수 없습니다.");
+          return;
+        }
+
+        // Ensure all elements exist before trying to access them
+        const participateModalTitle = document.getElementById(
+          "participateModalTitle"
+        );
+        const participateMeetingName = document.getElementById(
+          "participateMeetingName"
+        );
+        const declineReasonLabel =
+          document.getElementById("declineReasonLabel");
+        const declineReasonTextarea = document.getElementById("declineReason");
+        const declineButton = document.getElementById("declineButton");
+        const participateButton = document.getElementById("participateButton");
+        const confirmDeclineButton = document.getElementById(
+          "confirmDeclineButton"
+        );
+        const cancelDeclineButton = document.getElementById(
+          "cancelDeclineButton"
+        );
+
+        if (
+          !participateModalTitle ||
+          !participateMeetingName ||
+          !declineReasonLabel ||
+          !declineReasonTextarea ||
+          !declineButton ||
+          !participateButton ||
+          !confirmDeclineButton ||
+          !cancelDeclineButton
+        ) {
+          showMessageBox(
+            "오류",
+            "모달 요소를 찾을 수 없습니다. 페이지를 새로고침 해주세요."
+          );
+          return;
+        }
+
+        participateModalTitle.textContent = `"${meeting.name}" 약속 참여/불참`;
+        participateMeetingName.textContent = `"${meeting.name}" 약속에 대한 참여 여부`;
+
+        // Reset modal state
+        declineReasonLabel.classList.add("hidden");
+        declineReasonTextarea.classList.add("hidden");
+        declineReasonTextarea.value = "";
+
+        declineButton.classList.remove("hidden");
+        participateButton.classList.remove("hidden");
+        confirmDeclineButton.classList.add("hidden");
+        cancelDeclineButton.classList.add("hidden");
+
+        openModal("meetingParticipateModal");
+      }
+
+      // New function to show decline reason input
+      function showDeclineReasonInput() {
+        const declineReasonLabel =
+          document.getElementById("declineReasonLabel");
+        const declineReasonTextarea = document.getElementById("declineReason");
+        const declineButton = document.getElementById("declineButton");
+        const participateButton = document.getElementById("participateButton");
+        const confirmDeclineButton = document.getElementById(
+          "confirmDeclineButton"
+        );
+        const cancelDeclineButton = document.getElementById(
+          "cancelDeclineButton"
+        );
+
+        declineReasonLabel.classList.remove("hidden");
+        declineReasonTextarea.classList.remove("hidden");
+
+        declineButton.classList.add("hidden");
+        participateButton.classList.add("hidden");
+        confirmDeclineButton.classList.remove("hidden");
+        cancelDeclineButton.classList.remove("hidden");
+      }
+
+      // New function to hide decline reason input (if user cancels)
+      function hideDeclineReasonInput() {
+        const declineReasonLabel =
+          document.getElementById("declineReasonLabel");
+        const declineReasonTextarea = document.getElementById("declineReason");
+        const declineButton = document.getElementById("declineButton");
+        const participateButton = document.getElementById("participateButton");
+        const confirmDeclineButton = document.getElementById(
+          "confirmDeclineButton"
+        );
+        const cancelDeclineButton = document.getElementById(
+          "cancelDeclineButton"
+        );
+
+        declineReasonLabel.classList.add("hidden");
+        declineReasonTextarea.classList.add("hidden");
+        declineReasonTextarea.value = ""; // Clear input
+
+        declineButton.classList.remove("hidden");
+        participateButton.classList.remove("hidden");
+        confirmDeclineButton.classList.add("hidden");
+        cancelDeclineButton.classList.add("hidden");
+      }
+
+      function handleMeetingParticipation(status) {
+        if (!selectedMeetingId) return;
+
+        const meeting = currentGroup.meetings.find(
+          (m) => m.id === selectedMeetingId
+        );
+        if (!meeting) return;
+
+        let currentUserParticipation = meeting.participants.find(
+          (p) => p.userId === mockData.currentUser.id
+        );
+
+        if (!currentUserParticipation) {
+          currentUserParticipation = {
+            userId: mockData.currentUser.id,
+            status: "미정",
+            reason: "",
+          };
+          meeting.participants.push(currentUserParticipation);
+        }
+
+        currentUserParticipation.status = status;
+        if (status === "불참") {
+          const reason = document.getElementById("declineReason").value;
+          if (!reason) {
+            showMessageBox("필수 입력", "불참 사유를 입력해주세요.");
+            return;
+          }
+          currentUserParticipation.reason = reason;
+        } else {
+          currentUserParticipation.reason = "";
+        }
+
+        closeModal("meetingParticipateModal");
+        showMessageBox(
+          "성공",
+          `약속 참여 상태가 "${status}"으로 업데이트되었습니다.`
+        );
+        renderMeetings(); // Re-render to reflect changes
+        selectedMeetingId = null; // Clear selected ID
+      }
+
+      // --- Travels Tab Functions ---
+      function renderTravels() {
+        const contentDiv = document.getElementById("content");
+        contentDiv.innerHTML = `
+                <div class="section-header">
+                    <h2 class="section-title">✈️ 여행 목록</h2>
+                    <button class="btn btn-blue" onclick="openTravelCreateModal()">여행 일정 생성</button>
+                </div>
+                <div id="travelsList">
+                    <!-- Travels will be listed here -->
+                </div>
+            `;
+
+        const travelsListDiv = document.getElementById("travelsList");
+        if (currentGroup.travels.length === 0) {
+          travelsListDiv.innerHTML =
+            '<p class="text-gray-600">아직 등록된 여행이 없습니다.</p>';
+          return;
+        }
+
+        currentGroup.travels.forEach((travel) => {
+          let rolesSummary = travel.roles
+            .map((role) => `${role.name} - ${getUserNameById(role.assignedTo)}`)
+            .join(" / ");
+          if (rolesSummary.length > 100) {
+            // Truncate for display
+            rolesSummary = rolesSummary.substring(0, 97) + "...";
+          }
+
+          const travelCard = document.createElement("div");
+          travelCard.className = "card";
+          travelCard.innerHTML = `
+                    <div class="card-title">${travel.name}</div>
+                    <div class="card-subtitle">${travel.startDate} ~ ${travel.endDate}</div>
+                    <p class="card-text">역할 분담: ${rolesSummary}</p>
+                    <div class="flex gap-2 mt-4">
+                        <button class="btn btn-outline" onclick="viewTravelDetails('${travel.id}')">상세 보기</button>
+                    </div>
+                `;
+          travelsListDiv.appendChild(travelCard);
+        });
+      }
+
+      function viewTravelDetails(travelId) {
+        const travel = currentGroup.travels.find((t) => t.id === travelId);
+        if (!travel) {
+          showMessageBox("오류", "여행을 찾을 수 없습니다.");
+          return;
+        }
+
+        const currentUserRole = travel.roles.find(
+          (role) => role.assignedTo === mockData.currentUser.id
+        );
+        const editButtonHtml = currentUserRole
+          ? `<button class="btn btn-blue" onclick="openTravelRoleEditModal('${travel.id}', '${currentUserRole.name}')">내 역할 내용 수정</button>`
+          : "";
+
+        let rolesHtml = '<div class="role-grid">';
+        travel.roles.forEach((role) => {
+          rolesHtml += `
+                    <div class="role-item">
+                        <strong>${role.name}</strong>
+                        <span>${getUserNameById(role.assignedTo)}</span>
+                    </div>
+                `;
+        });
+        rolesHtml += "</div>";
+
+        const contentDiv = document.getElementById("content");
+        contentDiv.innerHTML = `
+                <div class="section-header">
+                    <h2 class="section-title">✈️ ${travel.name} 상세</h2>
+                    <button class="btn btn-outline" onclick="changeTab('travels')">목록으로 돌아가기</button>
+                </div>
+                <div class="detail-item">
+                    <h3>여행 정보</h3>
+                    <p><strong>기간:</strong> ${travel.startDate} ~ ${
+          travel.endDate
+        }</p>
+                    <p><strong>메모:</strong> ${travel.memo || "없음"}</p>
+                </div>
+                <div class="detail-item">
+                    <h3>역할 분담 현황</h3>
+                    ${rolesHtml}
+                </div>
+                <div class="detail-item mt-4">
+                    <h3>준비 현황판</h3>
+                    ${travel.roles
+                      .map(
+                        (role) => `
+                        <div class="mb-4 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                            <h4 class="font-semibold text-lg text-blue-700">${
+                              role.name
+                            } (${getUserNameById(role.assignedTo)})</h4>
+                            <p class="text-gray-700 mt-2">${
+                              role.content
+                                ? role.content.replace(/\n/g, "<br>")
+                                : "아직 준비 내용이 없습니다."
+                            }</p>
+                        </div>
+                    `
+                      )
+                      .join("")}
+                </div>
+                <div class="flex gap-2 mt-4">
+                    ${editButtonHtml}
+                </div>
+            `;
+      }
+
+      function openTravelCreateModal() {
+        document.getElementById("travelName").value = "";
+        document.getElementById("travelStartDate").value = "";
+        document.getElementById("travelEndDate").value = "";
+        document.getElementById("travelMemo").value = "";
+        document.getElementById("roleAssignmentContainer").innerHTML = ""; // Clear previous roles
+        addRoleInput(); // Add initial role input
+        openModal("travelCreateModal");
+      }
+
+      let roleInputCounter = 0;
+      function addRoleInput(roleName = "", assignedToName = "") {
+        const container = document.getElementById("roleAssignmentContainer");
+        const newRoleIndex = roleInputCounter++; // Use a counter for unique IDs
+
+        const roleDiv = document.createElement("div");
+        roleDiv.className = "flex items-center gap-2 mb-2";
+        roleDiv.innerHTML = `
+                <input type="text" id="roleName-${newRoleIndex}" placeholder="역할 이름 (예: 숙소)" value="${roleName}" class="flex-1">
+                <select id="roleAssignee-${newRoleIndex}" class="flex-1 p-2 border rounded-lg">
+                    <option value="">담당자 선택</option>
+                    ${mockData.users
+                      .map(
+                        (user) =>
+                          `<option value="${user.id}" ${
+                            user.name === assignedToName ? "selected" : ""
+                          }>${user.name}</option>`
+                      )
+                      .join("")}
+                </select>
+                <button class="btn btn-red px-3 py-2 text-sm" onclick="this.parentNode.remove()">삭제</button>
+            `;
+        container.appendChild(roleDiv);
+      }
+
+      function createTravel() {
+        const name = document.getElementById("travelName").value;
+        const startDate = document.getElementById("travelStartDate").value;
+        const endDate = document.getElementById("travelEndDate").value;
+        const memo = document.getElementById("travelMemo").value;
+
+        if (!name || !startDate || !endDate) {
+          showMessageBox(
+            "필수 정보 누락",
+            "여행 제목, 시작 날짜, 종료 날짜는 필수 입력 사항입니다."
+          );
+          return;
+        }
+
+        const roles = [];
+        for (let i = 0; i < roleInputCounter; i++) {
+          const roleNameInput = document.getElementById(`roleName-${i}`);
+          const roleAssigneeSelect = document.getElementById(
+            `roleAssignee-${i}`
+          );
+          if (roleNameInput && roleAssigneeSelect) {
+            const roleName = roleNameInput.value;
+            const assignedTo = roleAssigneeSelect.value;
+            if (roleName && assignedTo) {
+              roles.push({
+                name: roleName,
+                assignedTo: assignedTo,
+                content: "",
+              });
             }
+          }
+        }
+
+        if (roles.length === 0) {
+          showMessageBox(
+            "역할 분담 누락",
+            "최소 하나 이상의 역할을 지정해야 합니다."
+          );
+          return;
+        }
+
+        const newTravel = {
+          id: generateUniqueId("travel"),
+          name,
+          startDate,
+          endDate,
+          memo,
+          roles,
+        };
+
+        currentGroup.travels.push(newTravel);
+        closeModal("travelCreateModal");
+        showMessageBox("성공", "새 여행 일정이 생성되었습니다.");
+        renderTravels();
+      }
+
+      function openTravelRoleEditModal(travelId, roleName) {
+        selectedTravelId = travelId;
+        selectedTravelRoleName = roleName;
+
+        const travel = currentGroup.travels.find((t) => t.id === travelId);
+        if (travel) {
+          const role = travel.roles.find(
+            (r) =>
+              r.name === roleName && r.assignedTo === mockData.currentUser.id
+          );
+          if (role) {
+            document.getElementById(
+              "travelRoleEditModalTitle"
+            ).textContent = `${travel.name} - ${roleName} 역할 내용 수정`;
+            document.getElementById("travelRoleContent").value = role.content;
+            openModal("travelRoleEditModal");
+          } else {
+            showMessageBox(
+              "권한 없음",
+              "이 역할의 담당자가 아니거나 역할을 찾을 수 없습니다."
+            );
+          }
+        }
+      }
+
+      function saveTravelRoleContent() {
+        const travel = currentGroup.travels.find(
+          (t) => t.id === selectedTravelId
+        );
+        if (travel) {
+          const role = travel.roles.find(
+            (r) =>
+              r.name === selectedTravelRoleName &&
+              r.assignedTo === mockData.currentUser.id
+          );
+          if (role) {
+            role.content = document.getElementById("travelRoleContent").value;
+            closeModal("travelRoleEditModal");
+            showMessageBox("성공", "역할 내용이 저장되었습니다.");
+            viewTravelDetails(selectedTravelId); // Re-render details
+          }
+        }
+      }
+
+      // --- Birthdays Tab Functions ---
+      function renderBirthdays() {
+        const contentDiv = document.getElementById("content");
+        contentDiv.innerHTML = `
+                <div class="section-header">
+                    <h2 class="section-title">🎁 생일 목록</h2>
+                    <button class="btn btn-blue" onclick="openBirthdayAssignModal()">생일 담당자 지정</button>
+                </div>
+                <div id="birthdaysList">
+                    <!-- Birthdays will be listed here -->
+                </div>
+            `;
+
+        const birthdaysListDiv = document.getElementById("birthdaysList");
+        if (currentGroup.birthdays.length === 0) {
+          birthdaysListDiv.innerHTML =
+            '<p class="text-gray-600">아직 등록된 생일이 없습니다.</p>';
+          return;
+        }
+
+        // Sort birthdays by upcoming date
+        const sortedBirthdays = [...currentGroup.birthdays].sort((a, b) => {
+          const today = new Date();
+          const currentYear = today.getFullYear();
+
+          const dateA = new Date(`${currentYear}-${a.date}`);
+          const dateB = new Date(`${currentYear}-${b.date}`);
+
+          // If birthday has passed this year, consider it for next year
+          if (dateA < today) dateA.setFullYear(currentYear + 1);
+          if (dateB < today) dateB.setFullYear(currentYear + 1);
+
+          return dateA - dateB;
         });
 
-        // 약속 참여/불참 기능
-        function participateMeeting(meetingId) {
-            console.log('Participating in meeting:', meetingId);
-            
-            if (meetingId === 'regular') {
-                // UI 업데이트
-                const myParticipant = document.getElementById('regular-me');
-                myParticipant.textContent = '행성이 ✓';
-                
-                // 버튼 변경
-                const buttonsDiv = document.getElementById('regular-buttons');
-                buttonsDiv.innerHTML = '<span class="status-badge status-confirmed">참여 확정</span>';
-                
-                // 대시보드 업데이트
-                const dashboardCard = document.querySelector('#dashboard-page .card');
-                const dashboardStatus = dashboardCard.querySelector('.status-badge');
-                dashboardStatus.textContent = '참여확정';
-                dashboardStatus.className = 'status-badge status-confirmed';
-                
-                alert('311 정기 모임 참여가 확정되었습니다!');
-            }
-        }
+        sortedBirthdays.forEach((birthday) => {
+          const userName = getUserNameById(birthday.userId);
+          const assignedToName = birthday.assignedTo
+            ? getUserNameById(birthday.assignedTo)
+            : "미지정";
+          const statusClass = birthday.assignedTo ? "assigned" : "unassigned";
 
-        function declineMeeting(meetingId) {
-            console.log('Declining meeting:', meetingId);
-            
-            const reason = prompt('불참 사유를 입력해주세요:');
-            if (reason) {
-                if (meetingId === 'regular') {
-                    // UI 업데이트
-                    const myParticipant = document.getElementById('regular-me');
-                    myParticipant.textContent = '행성이 ✗';
-                    
-                    // 버튼 변경
-                    const buttonsDiv = document.getElementById('regular-buttons');
-                    buttonsDiv.innerHTML = `<span class="status-badge status-incomplete">불참 (${reason})</span>`;
-                    
-                    // 대시보드 업데이트
-                    const dashboardCard = document.querySelector('#dashboard-page .card');
-                    const dashboardStatus = dashboardCard.querySelector('.status-badge');
-                    dashboardStatus.textContent = '불참';
-                    dashboardStatus.className = 'status-badge status-incomplete';
-                }
-                
-                alert('불참이 등록되었습니다.');
-            }
-        }
-
-        // 생일 담당자 지정
-        function assignBirthdayManager(birthdayId) {
-            console.log('Assigning birthday manager for:', birthdayId);
-            
-            const managers = ['김수린', '김시원', '남보령', '행성이'];
-            const randomManager = managers[Math.floor(Math.random() * managers.length)];
-            
-            // UI 업데이트
-            const managerElement = document.getElementById(birthdayId + '-manager');
-            managerElement.textContent = randomManager;
-            
-            // 버튼 변경
-            const buttonDiv = document.getElementById(birthdayId + '-button');
-            buttonDiv.innerHTML = `<button class="btn btn-secondary" onclick="editBirthdayPreparation('${birthdayId}')">준비 현황 수정</button>`;
-            
-            alert(`생일 담당자로 ${randomManager}님이 지정되었습니다!`);
-        }
-
-        // 생일 준비 현황 수정
-        function editBirthdayPreparation(birthdayId) {
-            console.log('Editing birthday preparation for:', birthdayId);
-            
-            const preparation = prompt('생일 준비 현황을 입력해주세요:');
-            if (preparation) {
-                alert('생일 준비 현황이 저장되었습니다!');
-            }
-        }
-
-        // 회비 납부
-        function submitFee() {
-            console.log('Submitting fee');
-            
-            // UI 업데이트
-            const feeStatus = document.getElementById('my-fee-status');
-            feeStatus.textContent = '완료';
-            feeStatus.className = 'status-badge status-confirmed';
-            
-            // 버튼 변경
-            const buttonDiv = document.getElementById('fee-button');
-            buttonDiv.innerHTML = '<span class="status-badge status-confirmed">납부 완료</span>';
-            
-            // 대시보드 업데이트
-            const dashboardFeeCard = document.querySelector('#dashboard-page .card:last-child');
-            const dashboardFeeStatus = dashboardFeeCard.querySelector('.status-badge');
-            dashboardFeeStatus.textContent = '완료';
-            dashboardFeeStatus.className = 'status-badge status-confirmed';
-            
-            alert('회비 납부가 완료되었습니다!');
-        }
-
-        // 여행 상세 보기
-        function viewTravelDetail() {
-            console.log('Viewing travel detail');
-            alert('여행 상세 정보:\n\n숙소 - 김수린 (완료)\n관광 - 행성이 (완료)\n장보기 - 이유진 (대기)\n총무 - 김시원 (대기)\n맛집 찾기 - 남보령 (대기)');
-        }
-
-        // 내 역할 수정
-        function editMyRole() {
-            console.log('Editing my role');
-            
-            const roleContent = prompt('관광 담당으로서 준비한 내용을 입력해주세요:');
-            if (roleContent) {
-                alert('내 역할 수행 내용이 저장되었습니다!');
-            }
-        }
-
-        // 폼 제출 이벤트
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded');
-            
-            // 약속 생성 폼
-            const meetingForm = document.getElementById('meeting-form');
-            if (meetingForm) {
-                meetingForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    console.log('Meeting form submitted');
-                    alert('새 약속이 생성되었습니다!');
-                    closeModal('meeting-modal');
-                });
-            }
-
-            // 여행 생성 폼
-            const travelForm = document.getElementById('travel-form');
-            if (travelForm) {
-                travelForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    console.log('Travel form submitted');
-                    alert('새 여행이 생성되었습니다!');
-                    closeModal('travel-modal');
-                });
-            }
-
-            // 회비 생성 폼
-            const feeForm = document.getElementById('fee-form');
-            if (feeForm) {
-                feeForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    console.log('Fee form submitted');
-                    alert('새 회비가 생성되었습니다!');
-                    closeModal('fee-modal');
-                });
-            }
+          const birthdayCard = document.createElement("div");
+          birthdayCard.className = "card";
+          birthdayCard.innerHTML = `
+                    <div class="card-title">${userName}의 생일</div>
+                    <div class="card-subtitle">날짜: ${birthday.date}</div>
+                    <p class="card-text">
+                        담당자: <span class="status-badge ${statusClass}">${assignedToName}</span>
+                    </p>
+                    <div class="flex gap-2 mt-4">
+                        <button class="btn btn-outline" onclick="viewBirthdayDetails('${
+                          birthday.userId
+                        }')">상세 보기</button>
+                        ${
+                          birthday.assignedTo === mockData.currentUser.id
+                            ? `<button class="btn btn-green" onclick="openBirthdayPrepareModal('${birthday.userId}')">준비 현황 공유</button>`
+                            : ""
+                        }
+                    </div>
+                `;
+          birthdaysListDiv.appendChild(birthdayCard);
         });
+      }
+
+      function viewBirthdayDetails(userId) {
+        const birthday = currentGroup.birthdays.find(
+          (b) => b.userId === userId
+        );
+        if (!birthday) {
+          showMessageBox("오류", "생일 정보를 찾을 수 없습니다.");
+          return;
+        }
+
+        const userName = getUserNameById(birthday.userId);
+        const assignedToName = birthday.assignedTo
+          ? getUserNameById(birthday.assignedTo)
+          : "미지정";
+        const statusClass = birthday.assignedTo ? "assigned" : "unassigned";
+
+        const contentDiv = document.getElementById("content");
+        contentDiv.innerHTML = `
+                <div class="section-header">
+                    <h2 class="section-title">🎁 ${userName}의 생일 상세</h2>
+                    <button class="btn btn-outline" onclick="changeTab('birthdays')">목록으로 돌아가기</button>
+                </div>
+                <div class="detail-item">
+                    <h3>생일 정보</h3>
+                    <p><strong>이름:</strong> ${userName}</p>
+                    <p><strong>날짜:</strong> ${birthday.date}</p>
+                    <p><strong>담당자:</strong> <span class="status-badge ${statusClass}">${assignedToName}</span></p>
+                </div>
+                <div class="detail-item mt-4">
+                    <h3>준비 현황</h3>
+                    <p>${
+                      birthday.preparation
+                        ? birthday.preparation.replace(/\n/g, "<br>")
+                        : "아직 준비 내용이 없습니다."
+                    }</p>
+                </div>
+                <div class="flex gap-2 mt-4">
+                    ${
+                      birthday.assignedTo === mockData.currentUser.id
+                        ? `<button class="btn btn-green" onclick="openBirthdayPrepareModal('${birthday.userId}')">준비 현황 공유</button>`
+                        : ""
+                    }
+                </div>
+            `;
+      }
+
+      function openBirthdayAssignModal() {
+        // Find the next upcoming birthday that doesn't have an assigned person yet
+        const unassignedBirthdays = currentGroup.birthdays.filter(
+          (b) => !b.assignedTo
+        );
+
+        if (unassignedBirthdays.length === 0) {
+          // If all birthdays have been assigned, reset the assignment history for a new cycle
+          if (
+            currentGroup.birthdayAssignmentHistory.length ===
+            currentGroup.members.length - 1
+          ) {
+            // -1 because birthday person is excluded
+            currentGroup.birthdayAssignmentHistory = [];
+            showMessageBox(
+              "알림",
+              "모든 생일 담당자 지정이 완료되어, 새로운 담당자 지정 주기가 시작됩니다!"
+            );
+          } else {
+            showMessageBox(
+              "알림",
+              "모든 생일 담당자가 지정되었습니다. 새로운 담당자 지정은 다음 주기에 가능합니다."
+            );
+            return;
+          }
+        }
+
+        const sortedUnassignedBirthdays = [...unassignedBirthdays].sort(
+          (a, b) => {
+            const today = new Date();
+            const currentYear = today.getFullYear();
+
+            const dateA = new Date(`${currentYear}-${a.date}`);
+            const dateB = new Date(`${currentYear}-${b.date}`);
+
+            if (dateA < today) dateA.setFullYear(currentYear + 1);
+            if (dateB < today) dateB.setFullYear(currentYear + 1);
+
+            return dateA - dateB;
+          }
+        );
+
+        const nextBirthday = sortedUnassignedBirthdays[0];
+
+        if (!nextBirthday) {
+          showMessageBox("알림", "현재 지정할 수 있는 생일이 없습니다.");
+          return;
+        }
+
+        selectedBirthdayUserId = nextBirthday.userId;
+        document.getElementById(
+          "birthdayAssignInfo"
+        ).textContent = `다음 생일: ${getUserNameById(nextBirthday.userId)} (${
+          nextBirthday.date
+        })`;
+        document.getElementById("assignedBirthdayPerson").textContent =
+          "미지정"; // Reset display
+
+        openModal("birthdayAssignModal");
+      }
+
+      function assignBirthdayHandler() {
+        if (!selectedBirthdayUserId) {
+          showMessageBox("오류", "생일을 선택해주세요.");
+          return;
+        }
+
+        const birthdayToAssign = currentGroup.birthdays.find(
+          (b) => b.userId === selectedBirthdayUserId
+        );
+        if (!birthdayToAssign) return;
+
+        const potentialAssignees = currentGroup.members.filter(
+          (memberId) =>
+            memberId !== birthdayToAssign.userId && // Exclude the birthday person
+            !currentGroup.birthdayAssignmentHistory.includes(memberId) // Exclude those already assigned in this cycle
+        );
+
+        if (potentialAssignees.length === 0) {
+          // If all eligible members have been assigned in this cycle, reset history and try again
+          currentGroup.birthdayAssignmentHistory = [];
+          showMessageBox(
+            "알림",
+            "모든 친구가 한 번씩 생일 담당을 했습니다. 새로운 담당자 지정 주기가 시작됩니다!"
+          );
+          assignBirthdayHandler(); // Recursively call to assign in new cycle
+          return;
+        }
+
+        const randomIndex = Math.floor(
+          Math.random() * potentialAssignees.length
+        );
+        const assignedUserId = potentialAssignees[randomIndex];
+
+        birthdayToAssign.assignedTo = assignedUserId;
+        currentGroup.birthdayAssignmentHistory.push(assignedUserId); // Add to history for this cycle
+
+        document.getElementById("assignedBirthdayPerson").textContent =
+          getUserNameById(assignedUserId);
+        closeModal("birthdayAssignModal");
+        showMessageBox(
+          "성공",
+          `${getUserNameById(
+            birthdayToAssign.userId
+          )}의 생일 담당자로 ${getUserNameById(
+            assignedUserId
+          )}님이 지정되었습니다.`
+        );
+        renderBirthdays();
+        selectedBirthdayUserId = null;
+      }
+
+      function openBirthdayPrepareModal(userId) {
+        selectedBirthdayUserId = userId;
+        const birthday = currentGroup.birthdays.find(
+          (b) => b.userId === userId
+        );
+        if (birthday && birthday.assignedTo === mockData.currentUser.id) {
+          document.getElementById(
+            "birthdayPrepareModalTitle"
+          ).textContent = `${getUserNameById(userId)} 생일 준비 현황 공유`;
+          document.getElementById("birthdayPreparationContent").value =
+            birthday.preparation;
+          openModal("birthdayPrepareModal");
+        } else {
+          showMessageBox(
+            "권한 없음",
+            "이 생일의 담당자가 아니거나 정보를 찾을 수 없습니다."
+          );
+        }
+      }
+
+      function saveBirthdayPreparation() {
+        const birthday = currentGroup.birthdays.find(
+          (b) => b.userId === selectedBirthdayUserId
+        );
+        if (birthday && birthday.assignedTo === mockData.currentUser.id) {
+          birthday.preparation = document.getElementById(
+            "birthdayPreparationContent"
+          ).value;
+          closeModal("birthdayPrepareModal");
+          showMessageBox("성공", "생일 준비 현황이 저장되었습니다.");
+          viewBirthdayDetails(selectedBirthdayUserId); // Re-render details
+        }
+      }
+
+      // --- Expenses Tab Functions ---
+      function renderExpenses() {
+        const contentDiv = document.getElementById("content");
+        contentDiv.innerHTML = `
+                <div class="section-header">
+                    <h2 class="section-title">💰 회비 목록</h2>
+                    <button class="btn btn-blue" onclick="openModal('expenseCreateModal')">회비 항목 생성</button>
+                </div>
+                <div id="expensesList">
+                    <!-- Expenses will be listed here -->
+                </div>
+            `;
+
+        const expensesListDiv = document.getElementById("expensesList");
+        if (currentGroup.expenses.length === 0) {
+          expensesListDiv.innerHTML =
+            '<p class="text-gray-600">아직 등록된 회비 항목이 없습니다.</p>';
+          return;
+        }
+
+        currentGroup.expenses.forEach((expense) => {
+          const currentUserPaid = expense.payers.find(
+            (p) => p.userId === mockData.currentUser.id
+          )?.paid;
+          const paidStatusText = currentUserPaid ? "제출 완료" : "미제출";
+          const paidStatusClass = currentUserPaid ? "paid" : "unpaid";
+
+          const expenseCard = document.createElement("div");
+          expenseCard.className = "card";
+          expenseCard.innerHTML = `
+                    <div class="card-title">${expense.name}</div>
+                    <div class="card-subtitle">금액: ${expense.amount.toLocaleString()}원 | 마감일: ${
+            expense.deadline
+          }</div>
+                    <p class="card-text">
+                        내 상태: <span class="status-badge ${paidStatusClass}">${paidStatusText}</span>
+                    </p>
+                    <div class="flex gap-2 mt-4">
+                        <button class="btn btn-outline" onclick="viewExpenseDetails('${
+                          expense.id
+                        }')">상세 보기</button>
+                        ${
+                          !currentUserPaid
+                            ? `<button class="btn btn-green" onclick="markExpensePaid('${expense.id}')">제출 완료</button>`
+                            : ""
+                        }
+                    </div>
+                `;
+          expensesListDiv.appendChild(expenseCard);
+        });
+      }
+
+      function viewExpenseDetails(expenseId) {
+        const expense = currentGroup.expenses.find((e) => e.id === expenseId);
+        if (!expense) {
+          showMessageBox("오류", "회비 항목을 찾을 수 없습니다.");
+          return;
+        }
+
+        let payersHtml = "<ul>";
+        currentGroup.members.forEach((memberId) => {
+          const payer = expense.payers.find((p) => p.userId === memberId);
+          const paidStatus = payer ? payer.paid : false; // Default to false if not found
+          const statusText = paidStatus ? "제출 완료" : "미제출";
+          const statusClass = paidStatus ? "paid" : "unpaid";
+          payersHtml += `<li><strong>${getUserNameById(
+            memberId
+          )}</strong>: <span class="status-badge ${statusClass}">${statusText}</span></li>`;
+        });
+        payersHtml += "</ul>";
+
+        const currentUserPaid = expense.payers.find(
+          (p) => p.userId === mockData.currentUser.id
+        )?.paid;
+        const markPaidButtonHtml = !currentUserPaid
+          ? `<button class="btn btn-green" onclick="markExpensePaid('${expense.id}')">제출 완료</button>`
+          : "";
+
+        const contentDiv = document.getElementById("content");
+        contentDiv.innerHTML = `
+                <div class="section-header">
+                    <h2 class="section-title">💰 ${expense.name} 상세</h2>
+                    <button class="btn btn-outline" onclick="changeTab('expenses')">목록으로 돌아가기</button>
+                </div>
+                <div class="detail-item">
+                    <h3>회비 정보</h3>
+                    <p><strong>금액:</strong> ${expense.amount.toLocaleString()}원</p>
+                    <p><strong>마감일:</strong> ${expense.deadline}</p>
+                    <p><strong>벌칙:</strong> ${expense.penalty || "없음"}</p>
+                </div>
+                <div class="detail-item">
+                    <h3>제출 현황</h3>
+                    ${payersHtml}
+                </div>
+                <div class="flex gap-2 mt-4">
+                    ${markPaidButtonHtml}
+                </div>
+            `;
+      }
+
+      function createExpense() {
+        const name = document.getElementById("expenseName").value;
+        const amount = parseInt(document.getElementById("expenseAmount").value);
+        const deadline = document.getElementById("expenseDeadline").value;
+        const penalty = document.getElementById("expensePenalty").value;
+
+        if (!name || isNaN(amount) || !deadline) {
+          showMessageBox(
+            "필수 정보 누락",
+            "회비 항목 이름, 금액, 마감일은 필수 입력 사항입니다."
+          );
+          return;
+        }
+
+        const newExpense = {
+          id: generateUniqueId("expense"),
+          name,
+          amount,
+          deadline,
+          penalty,
+          payers: currentGroup.members.map((userId) => ({
+            userId: userId,
+            paid: false,
+          })),
+        };
+
+        // Set current user as paid by default if they are the creator or if it's a new expense they create.
+        // For simplicity, let's assume they are not automatically paid on creation unless specified.
+        // The scenario implies "김수린이 회비 항목 생성" 후 "김시원이 제출 완료" 이므로, 생성 시에는 모두 미납으로 둡니다.
+
+        currentGroup.expenses.push(newExpense);
+        closeModal("expenseCreateModal");
+        showMessageBox("성공", "새 회비 항목이 생성되었습니다.");
+        renderExpenses();
+      }
+
+      function markExpensePaid(expenseId) {
+        const expense = currentGroup.expenses.find((e) => e.id === expenseId);
+        if (expense) {
+          let payer = expense.payers.find(
+            (p) => p.userId === mockData.currentUser.id
+          );
+          if (!payer) {
+            payer = { userId: mockData.currentUser.id, paid: false };
+            expense.payers.push(payer);
+          }
+          payer.paid = true;
+          showMessageBox("성공", "회비 제출이 완료되었습니다.");
+          renderExpenses(); // Re-render to reflect changes
+        }
+      }
+
+      // --- Initial Load ---
+      document.addEventListener("DOMContentLoaded", () => {
+        renderGroupList();
+      });
     </script>
-</body>
+  </body>
 </html>
