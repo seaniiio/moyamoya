@@ -2,7 +2,7 @@
 
 ## 🔗 배포 url
 
-[배포 링크 넣어줘](https://preview--moyamoya.lovable.app/)
+https://preview--moyamoya.lovable.app/
 
 ## 핵심 가치
 
