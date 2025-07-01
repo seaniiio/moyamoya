@@ -475,7 +475,7 @@
                 </div>
 
                 <div class="card-grid">
-                    <div class="card">
+                    <div class="card" id="meeting-regular">
                         <div class="card-header">
                             <h3 class="card-title">311 정기 모임</h3>
                         </div>
@@ -486,17 +486,17 @@
                             <div class="participants">
                                 <span class="participant">김수린 ✓</span>
                                 <span class="participant">남보령 ✓</span>
-                                <span class="participant">행성이 ?</span>
+                                <span class="participant" id="regular-me">행성이 ?</span>
                                 <span class="participant">김시원 ?</span>
                             </div>
-                            <div style="margin-top: 1rem;">
+                            <div style="margin-top: 1rem;" id="regular-buttons">
                                 <button class="btn btn-primary" onclick="participateMeeting('regular')">참여</button>
                                 <button class="btn btn-secondary" onclick="declineMeeting('regular')">불참</button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
+                    <div class="card" id="meeting-party">
                         <div class="card-header">
                             <h3 class="card-title">연말 파티</h3>
                         </div>
@@ -509,7 +509,7 @@
                                 <span class="participant">남보령 ✓</span>
                                 <span class="participant">김시원 ✓</span>
                                 <span class="participant">이유진 ✓</span>
-                                <span class="participant">행성이 ✓</span>
+                                <span class="participant" id="party-me">행성이 ✓</span>
                             </div>
                             <div style="margin-top: 1rem;">
                                 <span class="status-badge status-confirmed">참여 확정</span>
@@ -543,7 +543,7 @@
                                 </div>
                                 <div class="card-item">
                                     <span>관광 - 행성이</span>
-                                    <span class="status-badge status-confirmed">완료</span>
+                                    <span class="status-badge status-confirmed" id="tourism-status">완료</span>
                                 </div>
                                 <div class="card-item">
                                     <span>장보기 - 이유진</span>
@@ -577,54 +577,54 @@
                 </div>
 
                 <div class="card-grid">
-                    <div class="card">
+                    <div class="card" id="birthday-yujin">
                         <div class="card-header">
                             <h3 class="card-title">이유진 생일</h3>
                         </div>
                         <div class="card-content">
                             <p><strong>생일:</strong> 10/30</p>
-                            <p><strong>담당자:</strong> 미정</p>
-                            <div style="margin-top: 1rem;">
-                                <button class="btn btn-primary" onclick="assignBirthdayManager()">담당자 랜덤 지정</button>
+                            <p><strong>담당자:</strong> <span id="yujin-manager">미정</span></p>
+                            <div style="margin-top: 1rem;" id="yujin-button">
+                                <button class="btn btn-primary" onclick="assignBirthdayManager('yujin')">담당자 랜덤 지정</button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
+                    <div class="card" id="birthday-surin">
                         <div class="card-header">
                             <h3 class="card-title">김수린 생일</h3>
                         </div>
                         <div class="card-content">
                             <p><strong>생일:</strong> 11/5</p>
-                            <p><strong>담당자:</strong> 미정</p>
-                            <div style="margin-top: 1rem;">
-                                <button class="btn btn-primary" onclick="assignBirthdayManager()">담당자 랜덤 지정</button>
+                            <p><strong>담당자:</strong> <span id="surin-manager">미정</span></p>
+                            <div style="margin-top: 1rem;" id="surin-button">
+                                <button class="btn btn-primary" onclick="assignBirthdayManager('surin')">담당자 랜덤 지정</button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
+                    <div class="card" id="birthday-siwon">
                         <div class="card-header">
                             <h3 class="card-title">김시원 생일</h3>
                         </div>
                         <div class="card-content">
                             <p><strong>생일:</strong> 2/26</p>
-                            <p><strong>담당자:</strong> 미정</p>
-                            <div style="margin-top: 1rem;">
-                                <button class="btn btn-primary" onclick="assignBirthdayManager()">담당자 랜덤 지정</button>
+                            <p><strong>담당자:</strong> <span id="siwon-manager">미정</span></p>
+                            <div style="margin-top: 1rem;" id="siwon-button">
+                                <button class="btn btn-primary" onclick="assignBirthdayManager('siwon')">담당자 랜덤 지정</button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
+                    <div class="card" id="birthday-boryeong">
                         <div class="card-header">
                             <h3 class="card-title">남보령 생일</h3>
                         </div>
                         <div class="card-content">
                             <p><strong>생일:</strong> 3/17</p>
-                            <p><strong>담당자:</strong> 미정</p>
-                            <div style="margin-top: 1rem;">
-                                <button class="btn btn-primary" onclick="assignBirthdayManager()">담당자 랜덤 지정</button>
+                            <p><strong>담당자:</strong> <span id="boryeong-manager">미정</span></p>
+                            <div style="margin-top: 1rem;" id="boryeong-button">
+                                <button class="btn btn-primary" onclick="assignBirthdayManager('boryeong')">담당자 랜덤 지정</button>
                             </div>
                         </div>
                     </div>
@@ -658,14 +658,14 @@
                                 </div>
                                 <div class="card-item">
                                     <span>행성이</span>
-                                    <span class="status-badge status-incomplete">미납</span>
+                                    <span class="status-badge status-incomplete" id="my-fee-status">미납</span>
                                 </div>
                                 <div class="card-item">
                                     <span>김시원</span>
                                     <span class="status-badge status-incomplete">미납</span>
                                 </div>
                             </div>
-                            <div style="margin-top: 1rem;">
+                            <div style="margin-top: 1rem;" id="fee-button">
                                 <button class="btn btn-primary" onclick="submitFee()">납부 완료</button>
                             </div>
                         </div>
@@ -778,8 +778,11 @@
     </div>
 
     <script>
+        console.log('JavaScript loaded');
+        
         // 페이지 네비게이션
         function showPage(pageId) {
+            console.log('Showing page:', pageId);
             // 모든 페이지 숨기기
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.add('hidden');
@@ -800,16 +803,19 @@
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const pageId = item.getAttribute('data-page');
+                console.log('Nav clicked:', pageId);
                 showPage(pageId);
             });
         });
 
         // 모달 관리
         function openModal(modalId) {
+            console.log('Opening modal:', modalId);
             document.getElementById(modalId).style.display = 'block';
         }
 
         function closeModal(modalId) {
+            console.log('Closing modal:', modalId);
             document.getElementById(modalId).style.display = 'none';
         }
 
@@ -822,55 +828,154 @@
 
         // 약속 참여/불참 기능
         function participateMeeting(meetingId) {
-            alert('약속 참여가 확정되었습니다!');
+            console.log('Participating in meeting:', meetingId);
+            
+            if (meetingId === 'regular') {
+                // UI 업데이트
+                const myParticipant = document.getElementById('regular-me');
+                myParticipant.textContent = '행성이 ✓';
+                
+                // 버튼 변경
+                const buttonsDiv = document.getElementById('regular-buttons');
+                buttonsDiv.innerHTML = '<span class="status-badge status-confirmed">참여 확정</span>';
+                
+                // 대시보드 업데이트
+                const dashboardCard = document.querySelector('#dashboard-page .card');
+                const dashboardStatus = dashboardCard.querySelector('.status-badge');
+                dashboardStatus.textContent = '참여확정';
+                dashboardStatus.className = 'status-badge status-confirmed';
+                
+                alert('311 정기 모임 참여가 확정되었습니다!');
+            }
         }
 
         function declineMeeting(meetingId) {
+            console.log('Declining meeting:', meetingId);
+            
             const reason = prompt('불참 사유를 입력해주세요:');
             if (reason) {
+                if (meetingId === 'regular') {
+                    // UI 업데이트
+                    const myParticipant = document.getElementById('regular-me');
+                    myParticipant.textContent = '행성이 ✗';
+                    
+                    // 버튼 변경
+                    const buttonsDiv = document.getElementById('regular-buttons');
+                    buttonsDiv.innerHTML = `<span class="status-badge status-incomplete">불참 (${reason})</span>`;
+                    
+                    // 대시보드 업데이트
+                    const dashboardCard = document.querySelector('#dashboard-page .card');
+                    const dashboardStatus = dashboardCard.querySelector('.status-badge');
+                    dashboardStatus.textContent = '불참';
+                    dashboardStatus.className = 'status-badge status-incomplete';
+                }
+                
                 alert('불참이 등록되었습니다.');
             }
         }
 
         // 생일 담당자 지정
-        function assignBirthdayManager() {
+        function assignBirthdayManager(birthdayId) {
+            console.log('Assigning birthday manager for:', birthdayId);
+            
             const managers = ['김수린', '김시원', '남보령', '행성이'];
             const randomManager = managers[Math.floor(Math.random() * managers.length)];
+            
+            // UI 업데이트
+            const managerElement = document.getElementById(birthdayId + '-manager');
+            managerElement.textContent = randomManager;
+            
+            // 버튼 변경
+            const buttonDiv = document.getElementById(birthdayId + '-button');
+            buttonDiv.innerHTML = `<button class="btn btn-secondary" onclick="editBirthdayPreparation('${birthdayId}')">준비 현황 수정</button>`;
+            
             alert(`생일 담당자로 ${randomManager}님이 지정되었습니다!`);
+        }
+
+        // 생일 준비 현황 수정
+        function editBirthdayPreparation(birthdayId) {
+            console.log('Editing birthday preparation for:', birthdayId);
+            
+            const preparation = prompt('생일 준비 현황을 입력해주세요:');
+            if (preparation) {
+                alert('생일 준비 현황이 저장되었습니다!');
+            }
         }
 
         // 회비 납부
         function submitFee() {
+            console.log('Submitting fee');
+            
+            // UI 업데이트
+            const feeStatus = document.getElementById('my-fee-status');
+            feeStatus.textContent = '완료';
+            feeStatus.className = 'status-badge status-confirmed';
+            
+            // 버튼 변경
+            const buttonDiv = document.getElementById('fee-button');
+            buttonDiv.innerHTML = '<span class="status-badge status-confirmed">납부 완료</span>';
+            
+            // 대시보드 업데이트
+            const dashboardFeeCard = document.querySelector('#dashboard-page .card:last-child');
+            const dashboardFeeStatus = dashboardFeeCard.querySelector('.status-badge');
+            dashboardFeeStatus.textContent = '완료';
+            dashboardFeeStatus.className = 'status-badge status-confirmed';
+            
             alert('회비 납부가 완료되었습니다!');
         }
 
         // 여행 상세 보기
         function viewTravelDetail() {
-            alert('여행 상세 정보를 보여줍니다.');
+            console.log('Viewing travel detail');
+            alert('여행 상세 정보:\n\n숙소 - 김수린 (완료)\n관광 - 행성이 (완료)\n장보기 - 이유진 (대기)\n총무 - 김시원 (대기)\n맛집 찾기 - 남보령 (대기)');
         }
 
         // 내 역할 수정
         function editMyRole() {
-            alert('역할 수정 페이지로 이동합니다.');
+            console.log('Editing my role');
+            
+            const roleContent = prompt('관광 담당으로서 준비한 내용을 입력해주세요:');
+            if (roleContent) {
+                alert('내 역할 수행 내용이 저장되었습니다!');
+            }
         }
 
         // 폼 제출 이벤트
-        document.getElementById('meeting-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert('새 약속이 생성되었습니다!');
-            closeModal('meeting-modal');
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            
+            // 약속 생성 폼
+            const meetingForm = document.getElementById('meeting-form');
+            if (meetingForm) {
+                meetingForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    console.log('Meeting form submitted');
+                    alert('새 약속이 생성되었습니다!');
+                    closeModal('meeting-modal');
+                });
+            }
 
-        document.getElementById('travel-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert('새 여행이 생성되었습니다!');
-            closeModal('travel-modal');
-        });
+            // 여행 생성 폼
+            const travelForm = document.getElementById('travel-form');
+            if (travelForm) {
+                travelForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    console.log('Travel form submitted');
+                    alert('새 여행이 생성되었습니다!');
+                    closeModal('travel-modal');
+                });
+            }
 
-        document.getElementById('fee-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert('새 회비가 생성되었습니다!');
-            closeModal('fee-modal');
+            // 회비 생성 폼
+            const feeForm = document.getElementById('fee-form');
+            if (feeForm) {
+                feeForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    console.log('Fee form submitted');
+                    alert('새 회비가 생성되었습니다!');
+                    closeModal('fee-modal');
+                });
+            }
         });
     </script>
 </body>
