@@ -1,24 +1,1397 @@
+
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>meet-share-gather</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모야모야 - 모임 관리 서비스</title>
+    <meta name="description" content="친구들과의 약속, 여행, 생일, 회비 관리를 쉽게">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <meta property="og:title" content="meet-share-gather" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: white;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .content {
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        .group-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .group-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #f0f0f0;
+        }
+
+        .group-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .group-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .group-members {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .tabs {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 400px;
+            width: 100%;
+            background: white;
+            display: flex;
+            border-top: 1px solid #eee;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .tab.active {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .tab-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #f0f0f0;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .card-date {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .card-content {
+            margin-bottom: 12px;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .participants {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .participant {
+            background: #f0f9ff;
+            color: #0369a1;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .participant.confirmed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .participant.declined {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-join {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-decline {
+            background: #ef4444;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px;
+            max-width: 350px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-confirmed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-declined {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .role-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .role-name {
+            font-weight: 500;
+        }
+
+        .role-assignee {
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            transition: all 0.2s;
+            z-index: 99;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 메인 헤더 -->
+        <div class="header">
+            <button class="back-btn hidden" onclick="goBack()">←</button>
+            <h1 id="header-title">모야모야</h1>
+            <div class="subtitle" id="header-subtitle">모임 관리 서비스</div>
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="content" id="main-content">
+            <!-- 초기 화면: 모임 목록 -->
+            <div id="group-list-view">
+                <div class="group-list">
+                    <div class="group-card" onclick="enterGroup('311')">
+                        <div class="group-name">🎉 311</div>
+                        <div class="group-members">행성이, 김수린, 김시원, 이유진, 남보령</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 모임 상세 화면 -->
+            <div id="group-detail-view" class="hidden">
+                <!-- 약속 탭 -->
+                <div id="appointments-tab" class="tab-content">
+                    <div id="appointments-list"></div>
+                    <div class="empty-state hidden" id="appointments-empty">
+                        <div class="empty-state-icon">📅</div>
+                        <p>등록된 약속이 없습니다</p>
+                    </div>
+                </div>
+
+                <!-- 여행 탭 -->
+                <div id="travels-tab" class="tab-content hidden">
+                    <div id="travels-list"></div>
+                    <div class="empty-state hidden" id="travels-empty">
+                        <div class="empty-state-icon">✈️</div>
+                        <p>등록된 여행이 없습니다</p>
+                    </div>
+                </div>
+
+                <!-- 생일 탭 -->
+                <div id="birthdays-tab" class="tab-content hidden">
+                    <div id="birthdays-list"></div>
+                    <div class="empty-state hidden" id="birthdays-empty">
+                        <div class="empty-state-icon">🎂</div>
+                        <p>등록된 생일이 없습니다</p>
+                    </div>
+                </div>
+
+                <!-- 회비 탭 -->
+                <div id="dues-tab" class="tab-content hidden">
+                    <div id="dues-list"></div>
+                    <div class="empty-state hidden" id="dues-empty">
+                        <div class="empty-state-icon">💰</div>
+                        <p>등록된 회비가 없습니다</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 상세 보기 화면들 -->
+            <div id="appointment-detail-view" class="hidden"></div>
+            <div id="travel-detail-view" class="hidden"></div>
+            <div id="birthday-detail-view" class="hidden"></div>
+            <div id="due-detail-view" class="hidden"></div>
+        </div>
+
+        <!-- 하단 탭 네비게이션 -->
+        <div class="tabs hidden" id="bottom-tabs">
+            <button class="tab active" onclick="switchTab('appointments')">
+                <span class="tab-icon">📅</span>
+                약속
+            </button>
+            <button class="tab" onclick="switchTab('travels')">
+                <span class="tab-icon">✈️</span>
+                여행
+            </button>
+            <button class="tab" onclick="switchTab('birthdays')">
+                <span class="tab-icon">🎂</span>
+                생일
+            </button>
+            <button class="tab" onclick="switchTab('dues')">
+                <span class="tab-icon">💰</span>
+                회비
+            </button>
+        </div>
+
+        <!-- 플로팅 액션 버튼 -->
+        <button class="fab hidden" id="fab-btn" onclick="showCreateModal()">+</button>
+    </div>
+
+    <!-- 모달들 -->
+    <!-- 약속 생성 모달 -->
+    <div class="modal" id="appointment-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">새 약속 만들기</h3>
+            </div>
+            <form id="appointment-form">
+                <div class="form-group">
+                    <label class="form-label">약속 이름</label>
+                    <input type="text" class="form-input" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">날짜</label>
+                    <input type="date" class="form-input" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">시간</label>
+                    <input type="time" class="form-input" name="time" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">장소</label>
+                    <input type="text" class="form-input" name="location" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">메모</label>
+                    <textarea class="form-input" name="memo" placeholder="추가 정보를 입력해주세요"></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('appointment-modal')">취소</button>
+                    <button type="submit" class="btn">생성하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 여행 생성 모달 -->
+    <div class="modal" id="travel-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">새 여행 만들기</h3>
+            </div>
+            <form id="travel-form">
+                <div class="form-group">
+                    <label class="form-label">여행 이름</label>
+                    <input type="text" class="form-input" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">시작 날짜</label>
+                    <input type="date" class="form-input" name="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">종료 날짜</label>
+                    <input type="date" class="form-input" name="endDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">장소</label>
+                    <input type="text" class="form-input" name="location" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">메모</label>
+                    <textarea class="form-input" name="memo" placeholder="여행 정보를 입력해주세요"></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('travel-modal')">취소</button>
+                    <button type="submit" class="btn">생성하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 회비 생성 모달 -->
+    <div class="modal" id="due-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">새 회비 만들기</h3>
+            </div>
+            <form id="due-form">
+                <div class="form-group">
+                    <label class="form-label">회비 명목</label>
+                    <input type="text" class="form-input" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">금액 (원)</label>
+                    <input type="number" class="form-input" name="amount" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">마감일</label>
+                    <input type="date" class="form-input" name="dueDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">벌칙</label>
+                    <input type="text" class="form-input" name="penalty" placeholder="예: 다음 약속에서 커피 사기">
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('due-modal')">취소</button>
+                    <button type="submit" class="btn">생성하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 참여 응답 모달 -->
+    <div class="modal" id="response-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">참여 응답</h3>
+            </div>
+            <div id="response-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // 데이터 저장소
+        let currentUser = '행성이';
+        let currentGroup = null;
+        let currentTab = 'appointments';
+        let currentView = 'group-list';
+
+        // 초기 데이터
+        let data = {
+            groups: {
+                '311': {
+                    name: '311',
+                    members: ['행성이', '김수린', '김시원', '이유진', '남보령'],
+                    appointments: [
+                        {
+                            id: 1,
+                            name: '311 정기 모임',
+                            date: '2025-07-05',
+                            time: '20:00',
+                            location: '오목교 경성주막',
+                            memo: '정기 모임입니다',
+                            creator: '김수린',
+                            participants: {
+                                '김수린': 'confirmed',
+                                '남보령': 'confirmed',
+                                '행성이': 'pending',
+                                '김시원': 'pending',
+                                '이유진': 'pending'
+                            },
+                            declineReasons: {}
+                        },
+                        {
+                            id: 2,
+                            name: '연말 파티',
+                            date: '2025-12-28',
+                            time: '20:00',
+                            location: '홍대 파티룸',
+                            memo: '올해 마지막 모임!',
+                            creator: '김수린',
+                            participants: {
+                                '김수린': 'confirmed',
+                                '남보령': 'confirmed',
+                                '김시원': 'confirmed',
+                                '이유진': 'confirmed',
+                                '행성이': 'pending'
+                            },
+                            declineReasons: {}
+                        }
+                    ],
+                    travels: [
+                        {
+                            id: 1,
+                            name: '베트남 다낭',
+                            startDate: '2025-06-27',
+                            endDate: '2025-07-01',
+                            location: '베트남 다낭',
+                            memo: '여름 휴가',
+                            roles: [
+                                { name: '숙소', assignee: '김수린', content: '🏨 다낭 호텔 정리\n\n📍네스타호텔 6/27~28 (1박)\n<https://maps.app.goo.gl/cDvcXLRYXCg6EBHJA?g_st=com.google.maps.preview.copy>\n📍코지다낭 부티크 호텔 6/28~30 (2박)\n<https://maps.app.goo.gl/zq9Q3Mt6SqVzhSBy8?g_st=com.google.maps.preview.copy>\n\n✔️호텔은 2명씩 방 4개 예약\n✔️네스타는 해안쪽, 코지다낭은 도심쪽\n✔️아고다로 예약, 캐쉬백은 들어오는데로 환급 예정' },
+                                { name: '관광', assignee: '행성이', content: '🚐인천공항까지 가는 콜벤🚐\n\n1) 당산역에서 오전 2시 (시원, 경민)\n2) 목동 41타워에서 오전 2시 10분 (보령, 혜윤, 재이, 수린, 지수)\n3) 목동고에서 오전 2시 20분 (유진)\n\n*절대 늦지 말고 시간 엄수!! 2),3)에서 타는 사람들은 5분씩 일찍 와서 기다리자~!!\n\n* 금액: 175,000원 (1인당 21,875원)' },
+                                { name: '장보기', assignee: '이유진', content: '' },
+                                { name: '총무', assignee: '김시원', content: '' },
+                                { name: '맛집 찾기', assignee: '남보령', content: '' }
+                            ]
+                        }
+                    ],
+                    birthdays: [
+                        { name: '김수린', date: '11-05', assignee: null, content: '' },
+                        { name: '김시원', date: '02-26', assignee: null, content: '' },
+                        { name: '이유진', date: '10-30', assignee: null, content: '' },
+                        { name: '남보령', date: '03-17', assignee: null, content: '' }
+                    ],
+                    dues: [
+                        {
+                            id: 1,
+                            name: '정기 회비',
+                            amount: 20000,
+                            dueDate: '2025-07-31',
+                            penalty: '다음 약속에서 커피 사기',
+                            payments: {
+                                '김수린': true,
+                                '남보령': true,
+                                '행성이': false,
+                                '김시원': false,
+                                '이유진': false
+                            }
+                        }
+                    ]
+                }
+            }
+        };
+
+        // 뷰 전환 함수들
+        function enterGroup(groupId) {
+            currentGroup = groupId;
+            currentView = 'group-detail';
+            document.getElementById('group-list-view').classList.add('hidden');
+            document.getElementById('group-detail-view').classList.remove('hidden');
+            document.getElementById('bottom-tabs').classList.remove('hidden');
+            document.getElementById('fab-btn').classList.remove('hidden');
+            document.querySelector('.back-btn').classList.remove('hidden');
+            
+            updateHeader();
+            loadTabContent();
+        }
+
+        function goBack() {
+            if (currentView === 'group-detail') {
+                currentView = 'group-list';
+                currentGroup = null;
+                document.getElementById('group-list-view').classList.remove('hidden');
+                document.getElementById('group-detail-view').classList.add('hidden');
+                document.getElementById('bottom-tabs').classList.add('hidden');
+                document.getElementById('fab-btn').classList.add('hidden');
+                document.querySelector('.back-btn').classList.add('hidden');
+                
+                // 상세 뷰들 숨기기
+                hideAllDetailViews();
+                updateHeader();
+            } else if (currentView.includes('-detail')) {
+                currentView = 'group-detail';
+                hideAllDetailViews();
+                document.getElementById('group-detail-view').classList.remove('hidden');
+                document.getElementById('bottom-tabs').classList.remove('hidden');
+                document.getElementById('fab-btn').classList.remove('hidden');
+                updateHeader();
+                loadTabContent();
+            }
+        }
+
+        function hideAllDetailViews() {
+            document.getElementById('appointment-detail-view').classList.add('hidden');
+            document.getElementById('travel-detail-view').classList.add('hidden');
+            document.getElementById('birthday-detail-view').classList.add('hidden');
+            document.getElementById('due-detail-view').classList.add('hidden');
+        }
+
+        function updateHeader() {
+            const title = document.getElementById('header-title');
+            const subtitle = document.getElementById('header-subtitle');
+            
+            if (currentView === 'group-list') {
+                title.textContent = '모야모야';
+                subtitle.textContent = '모임 관리 서비스';
+            } else if (currentView === 'group-detail') {
+                title.textContent = currentGroup;
+                const tabNames = {
+                    'appointments': '약속',
+                    'travels': '여행',
+                    'birthdays': '생일',
+                    'dues': '회비'
+                };
+                subtitle.textContent = tabNames[currentTab];
+            } else if (currentView.includes('-detail')) {
+                title.textContent = currentGroup;
+                subtitle.textContent = '상세 보기';
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // 탭 버튼 활성화 상태 변경
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 탭 컨텐츠 표시/숨김
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            document.getElementById(tab + '-tab').classList.remove('hidden');
+            
+            updateHeader();
+            loadTabContent();
+        }
+
+        function loadTabContent() {
+            if (!currentGroup) return;
+            
+            const groupData = data.groups[currentGroup];
+            
+            switch(currentTab) {
+                case 'appointments':
+                    loadAppointments(groupData.appointments);
+                    break;
+                case 'travels':
+                    loadTravels(groupData.travels);
+                    break;
+                case 'birthdays':
+                    loadBirthdays(groupData.birthdays);
+                    break;
+                case 'dues':
+                    loadDues(groupData.dues);
+                    break;
+            }
+        }
+
+        function loadAppointments(appointments) {
+            const container = document.getElementById('appointments-list');
+            const empty = document.getElementById('appointments-empty');
+            
+            if (appointments.length === 0) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            container.innerHTML = appointments.map(apt => `
+                <div class="card" onclick="showAppointmentDetail(${apt.id})">
+                    <div class="card-header">
+                        <div class="card-title">${apt.name}</div>
+                        <div class="card-date">${formatDate(apt.date)} ${apt.time}</div>
+                    </div>
+                    <div class="card-content">
+                        📍 ${apt.location}
+                        ${apt.memo ? `<br>💬 ${apt.memo}` : ''}
+                    </div>
+                    <div class="participants">
+                        ${Object.entries(apt.participants).map(([name, status]) => 
+                            `<span class="participant ${status}">${name}</span>`
+                        ).join('')}
+                    </div>
+                    ${apt.participants[currentUser] === 'pending' ? `
+                        <div class="action-buttons">
+                            <button class="btn-join" onclick="event.stopPropagation(); respondToAppointment(${apt.id}, 'confirmed')">참여</button>
+                            <button class="btn-decline" onclick="event.stopPropagation(); showDeclineModal(${apt.id})">불참</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function loadTravels(travels) {
+            const container = document.getElementById('travels-list');
+            const empty = document.getElementById('travels-empty');
+            
+            if (travels.length === 0) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            container.innerHTML = travels.map(travel => `
+                <div class="card" onclick="showTravelDetail(${travel.id})">
+                    <div class="card-header">
+                        <div class="card-title">${travel.name}</div>
+                        <div class="card-date">${formatDate(travel.startDate)} ~ ${formatDate(travel.endDate)}</div>
+                    </div>
+                    <div class="card-content">
+                        📍 ${travel.location}
+                        ${travel.memo ? `<br>💬 ${travel.memo}` : ''}
+                    </div>
+                    <div class="participants">
+                        ${travel.roles.map(role => 
+                            `<span class="participant">${role.name}: ${role.assignee}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadBirthdays(birthdays) {
+            const container = document.getElementById('birthdays-list');
+            const empty = document.getElementById('birthdays-empty');
+            
+            if (birthdays.length === 0) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            
+            // 생일을 날짜순으로 정렬
+            const sortedBirthdays = [...birthdays].sort((a, b) => {
+                const dateA = new Date(`2025-${a.date}`);
+                const dateB = new Date(`2025-${b.date}`);
+                return dateA - dateB;
+            });
+            
+            container.innerHTML = sortedBirthdays.map(birthday => `
+                <div class="card" onclick="showBirthdayDetail('${birthday.name}')">
+                    <div class="card-header">
+                        <div class="card-title">🎂 ${birthday.name}</div>
+                        <div class="card-date">${birthday.date}</div>
+                    </div>
+                    <div class="card-content">
+                        ${birthday.assignee ? `담당자: ${birthday.assignee}` : '담당자 미정'}
+                    </div>
+                    ${!birthday.assignee ? `
+                        <button class="btn" onclick="event.stopPropagation(); assignBirthdayManager('${birthday.name}')">담당자 지정</button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function loadDues(dues) {
+            const container = document.getElementById('dues-list');
+            const empty = document.getElementById('dues-empty');
+            
+            if (dues.length === 0) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            container.innerHTML = dues.map(due => `
+                <div class="card" onclick="showDueDetail(${due.id})">
+                    <div class="card-header">
+                        <div class="card-title">${due.name}</div>
+                        <div class="card-date">마감: ${formatDate(due.dueDate)}</div>
+                    </div>
+                    <div class="card-content">
+                        💰 ${due.amount.toLocaleString()}원
+                        ${due.penalty ? `<br>🚨 벌칙: ${due.penalty}` : ''}
+                    </div>
+                    <div class="participants">
+                        ${Object.entries(due.payments).map(([name, paid]) => 
+                            `<span class="participant ${paid ? 'confirmed' : 'declined'}">${name}</span>`
+                        ).join('')}
+                    </div>
+                    ${!due.payments[currentUser] ? `
+                        <button class="btn" onclick="event.stopPropagation(); payDue(${due.id})">제출 완료</button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // 상세 보기 함수들
+        function showAppointmentDetail(id) {
+            const appointment = data.groups[currentGroup].appointments.find(a => a.id === id);
+            if (!appointment) return;
+            
+            currentView = 'appointment-detail';
+            hideAllDetailViews();
+            document.getElementById('group-detail-view').classList.add('hidden');
+            document.getElementById('bottom-tabs').classList.add('hidden');
+            document.getElementById('fab-btn').classList.add('hidden');
+            
+            const container = document.getElementById('appointment-detail-view');
+            container.classList.remove('hidden');
+            
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">${appointment.name}</div>
+                        <div class="card-date">${formatDate(appointment.date)} ${appointment.time}</div>
+                    </div>
+                    <div class="card-content">
+                        <p><strong>📍 장소:</strong> ${appointment.location}</p>
+                        <p><strong>👤 생성자:</strong> ${appointment.creator}</p>
+                        ${appointment.memo ? `<p><strong>💬 메모:</strong> ${appointment.memo}</p>` : ''}
+                    </div>
+                    
+                    <h4 style="margin: 20px 0 10px 0;">참여 현황</h4>
+                    ${Object.entries(appointment.participants).map(([name, status]) => `
+                        <div class="role-item">
+                            <span class="role-name">${name}</span>
+                            <span class="status-badge ${status === 'confirmed' ? 'status-confirmed' : status === 'declined' ? 'status-declined' : 'status-pending'}">
+                                ${status === 'confirmed' ? '참여' : status === 'declined' ? '불참' : '미정'}
+                            </span>
+                        </div>
+                        ${status === 'declined' && appointment.declineReasons[name] ? `
+                            <div style="margin-left: 20px; color: #666; font-size: 14px; margin-bottom: 8px;">
+                                사유: ${appointment.declineReasons[name]}
+                            </div>
+                        ` : ''}
+                    `).join('')}
+                    
+                    ${appointment.participants[currentUser] === 'pending' ? `
+                        <div class="action-buttons" style="margin-top: 20px;">
+                            <button class="btn-join" onclick="respondToAppointment(${appointment.id}, 'confirmed')">참여</button>
+                            <button class="btn-decline" onclick="showDeclineModal(${appointment.id})">불참</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            updateHeader();
+        }
+
+        function showTravelDetail(id) {
+            const travel = data.groups[currentGroup].travels.find(t => t.id === id);
+            if (!travel) return;
+            
+            currentView = 'travel-detail';
+            hideAllDetailViews();
+            document.getElementById('group-detail-view').classList.add('hidden');
+            document.getElementById('bottom-tabs').classList.add('hidden');
+            document.getElementById('fab-btn').classList.add('hidden');
+            
+            const container = document.getElementById('travel-detail-view');
+            container.classList.remove('hidden');
+            
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">${travel.name}</div>
+                        <div class="card-date">${formatDate(travel.startDate)} ~ ${formatDate(travel.endDate)}</div>
+                    </div>
+                    <div class="card-content">
+                        <p><strong>📍 장소:</strong> ${travel.location}</p>
+                        ${travel.memo ? `<p><strong>💬 메모:</strong> ${travel.memo}</p>` : ''}
+                    </div>
+                    
+                    <h4 style="margin: 20px 0 10px 0;">역할 분담</h4>
+                    ${travel.roles.map(role => `
+                        <div class="card" style="margin-bottom: 12px;">
+                            <div class="role-item" style="margin-bottom: 8px;">
+                                <span class="role-name">${role.name}</span>
+                                <span class="role-assignee">${role.assignee}</span>
+                            </div>
+                            ${role.content ? `
+                                <div style="background: #f9fafb; padding: 12px; border-radius: 8px; white-space: pre-line; font-size: 14px;">
+                                    ${role.content}
+                                </div>
+                            ` : `
+                                <div style="text-align: center; color: #9ca3af; padding: 20px;">
+                                    아직 작성된 내용이 없습니다
+                                </div>
+                            `}
+                            ${role.assignee === currentUser ? `
+                                <button class="btn" style="margin-top: 8px;" onclick="editTravelRole(${travel.id}, '${role.name}')">
+                                    ${role.content ? '수정하기' : '작성하기'}
+                                </button>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            updateHeader();
+        }
+
+        function showBirthdayDetail(name) {
+            const birthday = data.groups[currentGroup].birthdays.find(b => b.name === name);
+            if (!birthday) return;
+            
+            currentView = 'birthday-detail';
+            hideAllDetailViews();
+            document.getElementById('group-detail-view').classList.add('hidden');
+            document.getElementById('bottom-tabs').classList.add('hidden');
+            document.getElementById('fab-btn').classList.add('hidden');
+            
+            const container = document.getElementById('birthday-detail-view');
+            container.classList.remove('hidden');
+            
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🎂 ${birthday.name}</div>
+                        <div class="card-date">${birthday.date}</div>
+                    </div>
+                    <div class="card-content">
+                        <p><strong>담당자:</strong> ${birthday.assignee || '미정'}</p>
+                    </div>
+                    
+                    ${!birthday.assignee ? `
+                        <button class="btn" onclick="assignBirthdayManager('${birthday.name}')">담당자 지정</button>
+                    ` : `
+                        <h4 style="margin: 20px 0 10px 0;">준비 현황</h4>
+                        <div class="card">
+                            ${birthday.content ? `
+                                <div style="white-space: pre-line; font-size: 14px;">
+                                    ${birthday.content}
+                                </div>
+                            ` : `
+                                <div style="text-align: center; color: #9ca3af; padding: 20px;">
+                                    아직 작성된 내용이 없습니다
+                                </div>
+                            `}
+                            ${birthday.assignee === currentUser ? `
+                                <button class="btn" style="margin-top: 12px;" onclick="editBirthdayContent('${birthday.name}')">
+                                    ${birthday.content ? '수정하기' : '작성하기'}
+                                </button>
+                            ` : ''}
+                        </div>
+                    `}
+                </div>
+            `;
+            
+            updateHeader();
+        }
+
+        function showDueDetail(id) {
+            const due = data.groups[currentGroup].dues.find(d => d.id === id);
+            if (!due) return;
+            
+            currentView = 'due-detail';
+            hideAllDetailViews();
+            document.getElementById('group-detail-view').classList.add('hidden');
+            document.getElementById('bottom-tabs').classList.add('hidden');
+            document.getElementById('fab-btn').classList.add('hidden');
+            
+            const container = document.getElementById('due-detail-view');
+            container.classList.remove('hidden');
+            
+            const paidCount = Object.values(due.payments).filter(paid => paid).length;
+            const totalCount = Object.keys(due.payments).length;
+            
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">${due.name}</div>
+                        <div class="card-date">마감: ${formatDate(due.dueDate)}</div>
+                    </div>
+                    <div class="card-content">
+                        <p><strong>💰 금액:</strong> ${due.amount.toLocaleString()}원</p>
+                        <p><strong>📊 진행률:</strong> ${paidCount}/${totalCount}명 (${Math.round(paidCount/totalCount*100)}%)</p>
+                        ${due.penalty ? `<p><strong>🚨 벌칙:</strong> ${due.penalty}</p>` : ''}
+                    </div>
+                    
+                    <h4 style="margin: 20px 0 10px 0;">제출 현황</h4>
+                    ${Object.entries(due.payments).map(([name, paid]) => `
+                        <div class="role-item">
+                            <span class="role-name">${name}</span>
+                            <span class="status-badge ${paid ? 'status-confirmed' : 'status-declined'}">
+                                ${paid ? '제출 완료' : '미제출'}
+                            </span>
+                        </div>
+                    `).join('')}
+                    
+                    ${!due.payments[currentUser] ? `
+                        <button class="btn" style="margin-top: 20px;" onclick="payDue(${due.id})">제출 완료</button>
+                    ` : ''}
+                </div>
+            `;
+            
+            updateHeader();
+        }
+
+        // 액션 함수들
+        function showCreateModal() {
+            const modals = {
+                'appointments': 'appointment-modal',
+                'travels': 'travel-modal',
+                'birthdays': null, // 생일은 생성이 아니라 담당자 지정
+                'dues': 'due-modal'
+            };
+            
+            const modalId = modals[currentTab];
+            if (modalId) {
+                document.getElementById(modalId).classList.add('show');
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        function respondToAppointment(id, response) {
+            data.groups[currentGroup].appointments.find(a => a.id === id).participants[currentUser] = response;
+            loadTabContent();
+            if (currentView === 'appointment-detail') {
+                showAppointmentDetail(id);
+            }
+        }
+
+        function showDeclineModal(id) {
+            const modal = document.getElementById('response-modal');
+            const content = document.getElementById('response-content');
+            
+            content.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">불참 사유를 입력해주세요</label>
+                    <textarea class="form-input" id="decline-reason" placeholder="불참 사유를 입력해주세요"></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="closeModal('response-modal')">취소</button>
+                    <button class="btn" onclick="submitDecline(${id})">확인</button>
+                </div>
+            `;
+            
+            modal.classList.add('show');
+        }
+
+        function submitDecline(id) {
+            const reason = document.getElementById('decline-reason').value;
+            const appointment = data.groups[currentGroup].appointments.find(a => a.id === id);
+            
+            appointment.participants[currentUser] = 'declined';
+            if (reason) {
+                appointment.declineReasons[currentUser] = reason;
+            }
+            
+            closeModal('response-modal');
+            loadTabContent();
+            if (currentView === 'appointment-detail') {
+                showAppointmentDetail(id);
+            }
+        }
+
+        function assignBirthdayManager(name) {
+            const members = data.groups[currentGroup].members.filter(m => m !== name);
+            const randomManager = members[Math.floor(Math.random() * members.length)];
+            
+            data.groups[currentGroup].birthdays.find(b => b.name === name).assignee = randomManager;
+            
+            alert(`${randomManager}님이 ${name}님의 생일 담당자로 지정되었습니다!`);
+            
+            loadTabContent();
+            if (currentView === 'birthday-detail') {
+                showBirthdayDetail(name);
+            }
+        }
+
+        function payDue(id) {
+            data.groups[currentGroup].dues.find(d => d.id === id).payments[currentUser] = true;
+            
+            alert('회비 제출이 완료되었습니다!');
+            
+            loadTabContent();
+            if (currentView === 'due-detail') {
+                showDueDetail(id);
+            }
+        }
+
+        function editTravelRole(travelId, roleName) {
+            const travel = data.groups[currentGroup].travels.find(t => t.id === travelId);
+            const role = travel.roles.find(r => r.name === roleName);
+            
+            const modal = document.getElementById('response-modal');
+            const content = document.getElementById('response-content');
+            
+            content.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">${roleName} 준비 현황</label>
+                    <textarea class="form-input" id="role-content" placeholder="준비 현황을 입력해주세요" style="min-height: 120px;">${role.content || ''}</textarea>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="closeModal('response-modal')">취소</button>
+                    <button class="btn" onclick="submitRoleContent(${travelId}, '${roleName}')">저장</button>
+                </div>
+            `;
+            
+            modal.classList.add('show');
+        }
+
+        function submitRoleContent(travelId, roleName) {
+            const content = document.getElementById('role-content').value;
+            const travel = data.groups[currentGroup].travels.find(t => t.id === travelId);
+            const role = travel.roles.find(r => r.name === roleName);
+            
+            role.content = content;
+            
+            closeModal('response-modal');
+            showTravelDetail(travelId);
+        }
+
+        function editBirthdayContent(name) {
+            const birthday = data.groups[currentGroup].birthdays.find(b => b.name === name);
+            
+            const modal = document.getElementById('response-modal');
+            const content = document.getElementById('response-content');
+            
+            content.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">${name}님 생일 준비 현황</label>
+                    <textarea class="form-input" id="birthday-content" placeholder="준비 현황을 입력해주세요" style="min-height: 120px;">${birthday.content || ''}</textarea>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="closeModal('response-modal')">취소</button>
+                    <button class="btn" onclick="submitBirthdayContent('${name}')">저장</button>
+                </div>
+            `;
+            
+            modal.classList.add('show');
+        }
+
+        function submitBirthdayContent(name) {
+            const content = document.getElementById('birthday-content').value;
+            data.groups[currentGroup].birthdays.find(b => b.name === name).content = content;
+            
+            closeModal('response-modal');
+            showBirthdayDetail(name);
+        }
+
+        // 폼 제출 이벤트들
+        document.getElementById('appointment-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            const newAppointment = {
+                id: Date.now(),
+                name: formData.get('name'),
+                date: formData.get('date'),
+                time: formData.get('time'),
+                location: formData.get('location'),
+                memo: formData.get('memo'),
+                creator: currentUser,
+                participants: {},
+                declineReasons: {}
+            };
+            
+            // 모든 멤버를 pending 상태로 초기화
+            data.groups[currentGroup].members.forEach(member => {
+                newAppointment.participants[member] = 'pending';
+            });
+            
+            data.groups[currentGroup].appointments.push(newAppointment);
+            
+            closeModal('appointment-modal');
+            this.reset();
+            loadTabContent();
+        });
+
+        document.getElementById('travel-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            const roles = ['숙소', '관광', '장보기', '총무', '맛집 찾기'];
+            const members = [...data.groups[currentGroup].members];
+            const shuffled = members.sort(() => 0.5 - Math.random());
+            
+            const newTravel = {
+                id: Date.now(),
+                name: formData.get('name'),
+                startDate: formData.get('startDate'),
+                endDate: formData.get('endDate'),
+                location: formData.get('location'),
+                memo: formData.get('memo'),
+                roles: roles.map((role, index) => ({
+                    name: role,
+                    assignee: shuffled[index % shuffled.length],
+                    content: ''
+                }))
+            };
+            
+            data.groups[currentGroup].travels.push(newTravel);
+            
+            closeModal('travel-modal');
+            this.reset();
+            loadTabContent();
+        });
+
+        document.getElementById('due-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            const newDue = {
+                id: Date.now(),
+                name: formData.get('name'),
+                amount: parseInt(formData.get('amount')),
+                dueDate: formData.get('dueDate'),
+                penalty: formData.get('penalty'),
+                payments: {}
+            };
+            
+            // 모든 멤버를 미납 상태로 초기화
+            data.groups[currentGroup].members.forEach(member => {
+                newDue.payments[member] = false;
+            });
+            
+            data.groups[currentGroup].dues.push(newDue);
+            
+            closeModal('due-modal');
+            this.reset();
+            loadTabContent();
+        });
+
+        // 유틸리티 함수들
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return `${date.getMonth() + 1}/${date.getDate()}`;
+        }
+
+        // 모달 외부 클릭 시 닫기
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+
+        // 초기 로드
+        document.addEventListener('DOMContentLoaded', function() {
+            // 초기화 작업이 필요하다면 여기에
+        });
+    </script>
+</body>
 </html>
