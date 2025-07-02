@@ -195,6 +195,10 @@
         box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
         width: 90%;
         max-width: 500px;
+        /* Flexbox for internal layout to allow scrolling body */
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh; /* Limit height to enable scrolling */
         transform: translateY(-20px);
         opacity: 0;
         transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
@@ -209,6 +213,7 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1.5rem;
+        flex-shrink: 0; /* Prevent header from shrinking */
       }
       .modal-title {
         font-size: 1.75rem;
@@ -225,6 +230,12 @@
       }
       .modal-close-button:hover {
         color: #333;
+      }
+      .modal-body {
+        flex-grow: 1; /* Allow body to take available space */
+        overflow-y: auto; /* Enable vertical scrolling for body content */
+        padding-right: 0.5rem; /* Add some padding for scrollbar */
+        margin-right: -0.5rem; /* Counteract scrollbar padding for full width */
       }
       .modal-body label {
         display: block;
@@ -263,6 +274,7 @@
         justify-content: flex-end;
         gap: 1rem;
         margin-top: 1.5rem;
+        flex-shrink: 0; /* Prevent footer from shrinking */
       }
       .modal-footer button {
         padding: 0.75rem 1.5rem;
@@ -445,6 +457,36 @@
         font-size: 1.1rem;
         color: #1a73e8;
         margin-bottom: 0.25rem;
+      }
+
+      /* Travel Notice Specific Style (Notion Callout like) */
+      .travel-notice-callout {
+        background-color: #e6f7ff; /* Light blue background */
+        border-left: 4px solid #1890ff; /* Blue left border */
+        border-radius: 0.75rem;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        font-size: 1rem;
+        color: #333;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+      .travel-notice-callout .pin-icon {
+        font-size: 1.5rem;
+        line-height: 1;
+        color: #1890ff; /* Blue icon */
+      }
+      .travel-notice-callout .notice-content-wrapper {
+        flex-grow: 1;
+      }
+      .travel-notice-callout .notice-text {
+        white-space: pre-wrap;
+      }
+      .travel-notice-callout .edit-button-container {
+        flex-shrink: 0;
+        margin-left: auto; /* Push to the right */
       }
 
       /* Responsive adjustments */
@@ -708,14 +750,16 @@
       </div>
     </div>
 
-    <!-- Travel Create Modal -->
-    <div id="travelCreateModal" class="modal-overlay">
+    <!-- Travel Create/Edit Form Modal (Renamed from travelCreateModal) -->
+    <div id="travelFormModal" class="modal-overlay">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title">새 여행 일정 생성</h2>
+          <h2 class="modal-title" id="travelFormModalTitle">
+            새 여행 일정 생성
+          </h2>
           <button
             class="modal-close-button"
-            onclick="closeModal('travelCreateModal')">
+            onclick="closeModal('travelFormModal')">
             &times;
           </button>
         </div>
@@ -745,19 +789,27 @@
           <button class="btn btn-outline w-full mt-4" onclick="addRoleInput()">
             + 역할 추가
           </button>
+          <button
+            class="btn btn-blue w-full mt-2"
+            onclick="randomlyAssignRoles()">
+            랜덤 분배
+          </button>
         </div>
         <div class="modal-footer">
-          <button
-            class="btn-secondary"
-            onclick="closeModal('travelCreateModal')">
+          <button class="btn-secondary" onclick="closeModal('travelFormModal')">
             취소
           </button>
-          <button class="btn-primary" onclick="createTravel()">저장</button>
+          <button
+            class="btn-primary"
+            id="saveTravelFormButton"
+            onclick="saveTravelForm(false)">
+            저장
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Travel Role Edit Modal -->
+    <!-- Travel Role Edit Content Modal (Existing for role content editing) -->
     <div id="travelRoleEditModal" class="modal-overlay">
       <div class="modal-content">
         <div class="modal-header">
@@ -784,6 +836,37 @@
             취소
           </button>
           <button class="btn-primary" onclick="saveTravelRoleContent()">
+            저장
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Travel Notice Edit Modal -->
+    <div id="travelNoticeEditModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">여행 공지사항 수정</h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('travelNoticeEditModal')">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <label for="travelNoticeContent">공지사항 내용</label>
+          <textarea
+            id="travelNoticeContent"
+            rows="5"
+            placeholder="공지사항을 입력해주세요."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-secondary"
+            onclick="closeModal('travelNoticeEditModal')">
+            취소
+          </button>
+          <button class="btn-primary" onclick="saveTravelNoticeContent()">
             저장
           </button>
         </div>
@@ -1015,22 +1098,24 @@
                 startDate: "2026-06-27", // Changed year to 2026
                 endDate: "2026-07-01", // Changed year to 2026
                 memo: "",
+                notice:
+                  "예산은 인당 40이고, 본인이 쇼핑할 만큼 추가적으로 환전해오기", // Added notice
                 roles: [
                   {
                     name: "숙소",
-                    assignedTo: "user-soorin",
+                    assignedTo: ["user-soorin"],
                     content: `🏨 다낭 호텔 정리\n\n📍네스타호텔 6/27~28 (1박)\nhttps://maps.app.goo.gl/cDvcXLRYXCg6EBHJA?g_st=com.google.maps.preview.copy\n📍코지다낭 부티크 호텔 6/28~30 (2박)\nhttps://maps.app.goo.gl/zq9Q3Mt6SqVzhSBy8?g_st=com.google.maps.preview.copy\n\n✔️호텔은 2명씩 방 4개 예약\n✔️네스타는 해안쪽, 코지다낭은 도심쪽\n✔️아고다로 예약, 캐쉬백은 들어오는데로 환급 예정`,
                   },
                   {
                     name: "관광",
-                    assignedTo: "user-hangseong-i",
+                    assignedTo: ["user-hangseong-i"],
                     content: `🚐인천공항까지 가는 콜벤🚐\n\n1) 당산역에서 오전 2시 (김시원, 고경민)\n2) 목동 41타워에서 오전 2시 10분 (남보령, 혜윤, 재이, 김수린, 지수)\n3) 목동고에서 오전 2시 20분 (이유진)\n\n*절대 늦지 말고 시간 엄수!! 2),3)에서 타는 사람들은 5분씩 일찍 와서 기다리자~!!\n\n* 금액: 175,000원 (1인당 21,875원)`,
                   },
-                  { name: "장보기", assignedTo: "user-yujin", content: "" },
-                  { name: "총무", assignedTo: "user-siwon", content: "" },
+                  { name: "장보기", assignedTo: ["user-yujin"], content: "" },
+                  { name: "총무", assignedTo: ["user-siwon"], content: "" },
                   {
                     name: "맛집 찾기",
-                    assignedTo: "user-boryeong",
+                    assignedTo: ["user-boryeong"],
                     content: "",
                   },
                 ],
@@ -1140,22 +1225,22 @@
                 startDate: "2025-11-20",
                 endDate: "2025-11-21",
                 memo: "우테코 졸업 축하 기념 부산 여행",
+                notice: "여행 장소가 국내 다른 지역으로 바뀔 수 있습니다~", // Added notice
                 roles: [
-                  { name: "숙소", assignedTo: "user-minggom", content: "" },
+                  { name: "숙소", assignedTo: ["user-minggom"], content: "" },
                   {
                     name: "관광",
-                    assignedTo: "user-may",
+                    assignedTo: ["user-may"],
                     content:
                       "롯데 자이언츠 vs 키움 히어로즈 야구를 보러 갑니다",
                   },
-                  { name: "장보기", assignedTo: "user-jensen", content: "" },
-                  { name: "총무", assignedTo: "user-jjanggu", content: "" },
+                  { name: "장보기", assignedTo: ["user-jensen"], content: "" },
+                  { name: "총무", assignedTo: ["user-jjanggu"], content: "" },
                   {
                     name: "맛집 찾기",
-                    assignedTo: "user-meonggu",
+                    assignedTo: ["user-meonggu", "user-pora"],
                     content: "",
-                  },
-                  { name: "맛집 찾기", assignedTo: "user-pora", content: "" }, // Assuming multiple people can be assigned to '맛집 찾기'
+                  }, // Multiple assignees
                 ],
               },
             ],
@@ -1200,7 +1285,7 @@
       let currentGroup = null;
       let currentTab = "dashboard"; // Default tab changed to dashboard
       let selectedMeetingId = null; // For meeting participation modal
-      let selectedTravelId = null; // For travel role edit modal
+      let selectedTravelId = null; // For travel form modal (for edit mode)
       let selectedTravelRoleName = null; // For travel role edit modal
       let selectedBirthdayUserId = null; // For birthday prepare modal
       let selectedExpenseId = null; // For expense submission
@@ -1495,7 +1580,9 @@
                             <p class="card-text">역할: ${t.roles
                               .map(
                                 (r) =>
-                                  `${r.name} (${getUserNameById(r.assignedTo)})`
+                                  `${r.name} (${r.assignedTo
+                                    .map((id) => getUserNameById(id))
+                                    .join(", ")})`
                               )
                               .join(", ")}</p>
                         `
@@ -1908,7 +1995,7 @@
         contentDiv.innerHTML = `
                 <div class="section-header">
                     <h2 class="section-title">✈️ 여행 목록</h2>
-                    <button class="btn btn-blue" onclick="openTravelCreateModal()">여행 일정 생성</button>
+                    <button class="btn btn-blue" onclick="openTravelFormModal()">여행 일정 생성</button>
                 </div>
                 <div id="travelsList">
                     <!-- Travels will be listed here -->
@@ -1923,9 +2010,16 @@
         }
 
         currentGroup.travels.forEach((travel) => {
+          // Display multiple assignees for roles
           let rolesSummary = travel.roles
-            .map((role) => `${role.name} - ${getUserNameById(role.assignedTo)}`)
+            .map((role) => {
+              const assignedNames = role.assignedTo
+                .map((id) => getUserNameById(id))
+                .join(", ");
+              return `${role.name} - ${assignedNames || "미지정"}`;
+            })
             .join(" / ");
+
           if (rolesSummary.length > 100) {
             // Truncate for display
             rolesSummary = rolesSummary.substring(0, 97) + "...";
@@ -1952,19 +2046,53 @@
           return;
         }
 
-        const currentUserRole = travel.roles.find(
-          (role) => role.assignedTo === mockData.currentUser.id
-        );
+        const currentUserRole = travel.roles.find((role) =>
+          role.assignedTo.includes(mockData.currentUser.id)
+        ); // Check if current user is assigned to any role
         const editButtonHtml = currentUserRole
           ? `<button class="btn btn-blue" onclick="openTravelRoleEditModal('${travel.id}', '${currentUserRole.name}')">내 역할 내용 수정</button>`
           : "";
 
+        const noticeHtml = travel.notice
+          ? `
+                <div class="travel-notice-callout">
+                    <span class="pin-icon">📌</span>
+                    <div class="notice-content-wrapper">
+                        <p class="font-semibold mb-1">공지사항</p>
+                        <p class="notice-text">${travel.notice.replace(
+                          /\n/g,
+                          "<br>"
+                        )}</p>
+                    </div>
+                    <div class="edit-button-container">
+                        <button class="btn btn-outline text-sm py-1 px-3" onclick="openTravelNoticeEditModal('${
+                          travel.id
+                        }')">수정</button>
+                    </div>
+                </div>
+            `
+          : `
+                <div class="travel-notice-callout">
+                    <span class="pin-icon">📌</span>
+                    <div class="notice-content-wrapper">
+                        <p class="font-semibold mb-1">공지사항</p>
+                        <p class="notice-text">아직 등록된 공지사항이 없습니다.</p>
+                    </div>
+                    <div class="edit-button-container">
+                        <button class="btn btn-outline text-sm py-1 px-3" onclick="openTravelNoticeEditModal('${travel.id}')">등록</button>
+                    </div>
+                </div>
+            `;
+
         let rolesHtml = '<div class="role-grid">';
         travel.roles.forEach((role) => {
+          const assignedNames =
+            role.assignedTo.map((id) => getUserNameById(id)).join(", ") ||
+            "미지정";
           rolesHtml += `
                     <div class="role-item">
                         <strong>${role.name}</strong>
-                        <span>${getUserNameById(role.assignedTo)}</span>
+                        <span>${assignedNames}</span>
                     </div>
                 `;
         });
@@ -1974,8 +2102,12 @@
         contentDiv.innerHTML = `
                 <div class="section-header">
                     <h2 class="section-title">✈️ ${travel.name} 상세</h2>
+                    <button class="btn btn-blue" onclick="openTravelFormModal('${
+                      travel.id
+                    }')">여행 수정</button> <!-- Changed button text -->
                     <button class="btn btn-outline" onclick="changeTab('travels')">목록으로 돌아가기</button>
                 </div>
+                ${noticeHtml}
                 <div class="detail-item">
                     <h3>여행 정보</h3>
                     <p><strong>기간:</strong> ${travel.startDate} ~ ${
@@ -1995,7 +2127,11 @@
                         <div class="mb-4 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
                             <h4 class="font-semibold text-lg text-blue-700">${
                               role.name
-                            } (${getUserNameById(role.assignedTo)})</h4>
+                            } (${
+                          role.assignedTo
+                            .map((id) => getUserNameById(id))
+                            .join(", ") || "미지정"
+                        })</h4>
                             <p class="text-gray-700 mt-2">${
                               role.content
                                 ? role.content.replace(/\n/g, "<br>")
@@ -2012,48 +2148,164 @@
             `;
       }
 
-      function openTravelCreateModal() {
-        document.getElementById("travelName").value = "";
-        document.getElementById("travelStartDate").value = "";
-        document.getElementById("travelEndDate").value = "";
-        document.getElementById("travelMemo").value = "";
-        document.getElementById("roleAssignmentContainer").innerHTML = ""; // Clear previous roles
-        addRoleInput(); // Add initial role input
-        openModal("travelCreateModal");
+      // Renamed from openTravelCreateModal to handle both create and edit
+      function openTravelFormModal(travelId = null) {
+        selectedTravelId = travelId; // Store travelId for edit mode
+
+        const travelFormModalTitle = document.getElementById(
+          "travelFormModalTitle"
+        );
+        const saveTravelFormButton = document.getElementById(
+          "saveTravelFormButton"
+        );
+        const travelNameInput = document.getElementById("travelName");
+        const travelStartDateInput = document.getElementById("travelStartDate");
+        const travelEndDateInput = document.getElementById("travelEndDate");
+        const travelMemoInput = document.getElementById("travelMemo");
+        const roleAssignmentContainer = document.getElementById(
+          "roleAssignmentContainer"
+        );
+
+        // Reset form and role inputs
+        travelNameInput.value = "";
+        travelStartDateInput.value = "";
+        travelEndDateInput.value = "";
+        travelMemoInput.value = "";
+        roleAssignmentContainer.innerHTML = "";
+        roleInputCounter = 0; // Reset counter for new inputs
+
+        if (travelId) {
+          // Edit mode
+          const travel = currentGroup.travels.find((t) => t.id === travelId);
+          if (travel) {
+            travelFormModalTitle.textContent = "여행 수정"; // Changed title
+            saveTravelFormButton.onclick = () => saveTravelForm(true); // Set to edit mode
+            travelNameInput.value = travel.name;
+            travelStartDateInput.value = travel.startDate;
+            travelEndDateInput.value = travel.endDate;
+            travelMemoInput.value = travel.memo;
+            travel.roles.forEach((role) => {
+              addRoleInput(role.name, role.assignedTo); // Populate existing roles
+            });
+          } else {
+            showMessageBox("오류", "수정할 여행을 찾을 수 없습니다.");
+            return;
+          }
+        } else {
+          // Create mode
+          travelFormModalTitle.textContent = "새 여행 일정 생성";
+          saveTravelFormButton.onclick = () => saveTravelForm(false); // Set to create mode
+          addRoleInput(); // Add initial empty role input for new creation
+        }
+        openModal("travelFormModal");
       }
 
       let roleInputCounter = 0;
-      function addRoleInput(roleName = "", assignedToId = "") {
-        // Changed assignedToName to assignedToId
+      function addRoleInput(roleName = "", assignedToIds = []) {
+        // assignedToIds is now an array
         const container = document.getElementById("roleAssignmentContainer");
-        const newRoleIndex = roleInputCounter++; // Use a counter for unique IDs
+        const newRoleIndex = roleInputCounter++;
 
         const roleDiv = document.createElement("div");
         roleDiv.className = "flex items-center gap-2 mb-2";
+        // Add 'multiple' attribute to the select
         roleDiv.innerHTML = `
                 <input type="text" id="roleName-${newRoleIndex}" placeholder="역할 이름 (예: 숙소)" class="flex-1" value="${roleName}">
-                <select id="roleAssignee-${newRoleIndex}" class="flex-1 p-2 border rounded-lg">
-                    <option value="">담당자 선택</option>
-                    ${mockData.users
-                      .map(
-                        (user) =>
-                          `<option value="${user.id}" ${
-                            user.id === assignedToId ? "selected" : ""
-                          }>${user.name}</option>`
-                      )
+                <select id="roleAssignee-${newRoleIndex}" class="flex-1 p-2 border rounded-lg" multiple size="3">
+                    <option value="">담당자 선택 (Ctrl/Cmd + 클릭으로 다중 선택)</option>
+                    ${currentGroup.members
+                      .map((memberId) => {
+                        const userName = getUserNameById(memberId);
+                        const isSelected = assignedToIds.includes(memberId)
+                          ? "selected"
+                          : "";
+                        return `<option value="${memberId}" ${isSelected}>${userName}</option>`;
+                      })
                       .join("")}
                 </select>
                 <button class="btn btn-red px-3 py-2 text-sm" onclick="this.parentNode.remove()">삭제</button>
             `;
-        container.appendChild(div);
+        container.appendChild(roleDiv);
       }
 
-      function createTravel() {
+      // Function to handle random assignment
+      function randomlyAssignRoles() {
+        const allMembers = [...currentGroup.members]; // Get all members of the current group
+        const shuffledMembers = allMembers.sort(() => Math.random() - 0.5); // Shuffle members
+        const roleInputs = document.querySelectorAll(
+          "#roleAssignmentContainer .flex.items-center.gap-2.mb-2"
+        );
+
+        if (roleInputs.length === 0) {
+          showMessageBox(
+            "오류",
+            "역할이 정의되지 않았습니다. 먼저 역할을 추가해주세요."
+          );
+          return;
+        }
+
+        // Clear existing selections in all role selects
+        roleInputs.forEach((roleDiv) => {
+          const selectElement = roleDiv.querySelector("select");
+          if (selectElement) {
+            Array.from(selectElement.options).forEach((option) => {
+              option.selected = false;
+            });
+          }
+        });
+
+        let memberIndex = 0;
+        // Distribute members to roles in a round-robin fashion
+        for (let i = 0; i < roleInputs.length; i++) {
+          const roleDiv = roleInputs[i];
+          const selectElement = roleDiv.querySelector("select");
+          if (!selectElement) continue;
+
+          // Assign at least one member if available
+          if (memberIndex < shuffledMembers.length) {
+            const memberToAssign = shuffledMembers[memberIndex];
+            Array.from(selectElement.options).forEach((option) => {
+              if (option.value === memberToAssign) {
+                option.selected = true;
+              }
+            });
+            memberIndex++;
+          }
+        }
+
+        // If there are still unassigned members, distribute them to roles that have capacity
+        // This is a simplified approach; a more robust one might consider role "capacity"
+        while (memberIndex < shuffledMembers.length) {
+          for (let i = 0; i < roleInputs.length; i++) {
+            if (memberIndex >= shuffledMembers.length) break;
+
+            const roleDiv = roleInputs[i];
+            const selectElement = roleDiv.querySelector("select");
+            if (!selectElement) continue;
+
+            const memberToAssign = shuffledMembers[memberIndex];
+            Array.from(selectElement.options).forEach((option) => {
+              if (option.value === memberToAssign) {
+                option.selected = true;
+              }
+            });
+            memberIndex++;
+          }
+        }
+        showMessageBox(
+          "랜덤 분배 완료",
+          "모든 멤버가 역할에 랜덤으로 분배되었습니다."
+        );
+      }
+
+      // Renamed from createTravel to handle both create and update
+      function saveTravelForm(isEditMode) {
         const name = document.getElementById("travelName").value;
         const startDate = document.getElementById("travelStartDate").value;
         const endDate = document.getElementById("travelEndDate").value;
         const memo = document.getElementById("travelMemo").value;
 
+        // Fixed validation logic for endDate
         if (!name || !startDate || !endDate) {
           showMessageBox(
             "필수 정보 누락",
@@ -2063,23 +2315,29 @@
         }
 
         const roles = [];
-        for (let i = 0; i < roleInputCounter; i++) {
-          const roleNameInput = document.getElementById(`roleName-${i}`);
-          const roleAssigneeSelect = document.getElementById(
-            `roleAssignee-${i}`
-          );
+        const roleInputElements = document.querySelectorAll(
+          "#roleAssignmentContainer .flex.items-center.gap-2.mb-2"
+        );
+        roleInputElements.forEach((roleDiv) => {
+          const roleNameInput = roleDiv.querySelector('input[type="text"]');
+          const roleAssigneeSelect = roleDiv.querySelector("select");
           if (roleNameInput && roleAssigneeSelect) {
-            const roleName = roleNameInput.value;
-            const assignedTo = roleAssigneeSelect.value;
-            if (roleName && assignedTo) {
+            const roleName = roleNameInput.value.trim();
+            // Get all selected options for multi-select
+            const assignedToIds = Array.from(
+              roleAssigneeSelect.selectedOptions
+            ).map((option) => option.value);
+
+            if (roleName) {
+              // Role name is mandatory
               roles.push({
                 name: roleName,
-                assignedTo: assignedTo,
+                assignedTo: assignedToIds,
                 content: "",
               });
             }
           }
-        }
+        });
 
         if (roles.length === 0) {
           showMessageBox(
@@ -2089,19 +2347,45 @@
           return;
         }
 
-        const newTravel = {
-          id: generateUniqueId("travel"),
-          name,
-          startDate,
-          endDate,
-          memo,
-          roles,
-        };
+        if (isEditMode) {
+          const travel = currentGroup.travels.find(
+            (t) => t.id === selectedTravelId
+          );
+          if (travel) {
+            travel.name = name;
+            travel.startDate = startDate;
+            travel.endDate = endDate;
+            travel.memo = memo;
+            // Preserve existing content for roles if they still exist
+            const updatedRoles = roles.map((newRole) => {
+              const existingRole = travel.roles.find(
+                (oldRole) => oldRole.name === newRole.name
+              );
+              return {
+                ...newRole,
+                content: existingRole ? existingRole.content : "", // Keep old content if role name matches
+              };
+            });
+            travel.roles = updatedRoles;
+            showMessageBox("성공", "여행 정보가 수정되었습니다."); // Changed message
+          }
+        } else {
+          const newTravel = {
+            id: generateUniqueId("travel"),
+            name,
+            startDate,
+            endDate,
+            memo,
+            notice: "", // Initialize with empty notice
+            roles,
+          };
+          currentGroup.travels.push(newTravel);
+          showMessageBox("성공", "새 여행 일정이 생성되었습니다.");
+        }
 
-        currentGroup.travels.push(newTravel);
-        closeModal("travelCreateModal");
-        showMessageBox("성공", "새 여행 일정이 생성되었습니다.");
-        renderTravels();
+        closeModal("travelFormModal");
+        renderTravels(); // Re-render to reflect changes
+        selectedTravelId = null; // Clear selected ID
       }
 
       function openTravelRoleEditModal(travelId, roleName) {
@@ -2110,9 +2394,11 @@
 
         const travel = currentGroup.travels.find((t) => t.id === travelId);
         if (travel) {
+          // Find the specific role for the current user
           const role = travel.roles.find(
             (r) =>
-              r.name === roleName && r.assignedTo === mockData.currentUser.id
+              r.name === roleName &&
+              r.assignedTo.includes(mockData.currentUser.id)
           );
           if (role) {
             document.getElementById(
@@ -2134,17 +2420,43 @@
           (t) => t.id === selectedTravelId
         );
         if (travel) {
+          // Find the specific role for the current user
           const role = travel.roles.find(
             (r) =>
               r.name === selectedTravelRoleName &&
-              r.assignedTo === mockData.currentUser.id
+              r.assignedTo.includes(mockData.currentUser.id)
           );
           if (role) {
             role.content = document.getElementById("travelRoleContent").value;
             closeModal("travelRoleEditModal");
             showMessageBox("성공", "역할 내용이 저장되었습니다.");
-            viewTravelDetails(selectedTravelId); // Re-render details
+            viewTravelDetails(selectedTravelId); // Re-render details to show updated notice
           }
+        }
+      }
+
+      // --- Travel Notice Functions ---
+      function openTravelNoticeEditModal(travelId) {
+        selectedTravelId = travelId;
+        const travel = currentGroup.travels.find((t) => t.id === travelId);
+        if (travel) {
+          document.getElementById("travelNoticeContent").value =
+            travel.notice || "";
+          openModal("travelNoticeEditModal");
+        } else {
+          showMessageBox("오류", "여행 정보를 찾을 수 없습니다.");
+        }
+      }
+
+      function saveTravelNoticeContent() {
+        const travel = currentGroup.travels.find(
+          (t) => t.id === selectedTravelId
+        );
+        if (travel) {
+          travel.notice = document.getElementById("travelNoticeContent").value;
+          closeModal("travelNoticeEditModal");
+          showMessageBox("성공", "공지사항이 저장되었습니다.");
+          viewTravelDetails(selectedTravelId); // Re-render details to show updated notice
         }
       }
 
@@ -2177,8 +2489,8 @@
           const dateB = new Date(`${currentYear}-${b.date}`);
 
           // If birthday has passed this year, consider it for next year
-          if (dateA < today) dateA.setFullYear(currentYear + 1);
-          if (dateB < today) dateB.setFullYear(currentYear + 1);
+          if (dateA < today) dateA.setFullYear(today.getFullYear() + 1);
+          if (dateB < today) dateB.setFullYear(today.getFullYear() + 1);
 
           return dateA - dateB;
         });
@@ -2507,7 +2819,7 @@
           const statusClass = paidStatus ? "paid" : "unpaid";
           payersHtml += `<li><strong>${getUserNameById(
             memberId
-          )}</strong>: <span class="status-badge ${statusClass}">${statusText}</span></li>`;
+          )}</strong>: <span class="status-badge ${statusClass}">${status}</span></li>`;
         });
         payersHtml += "</ul>";
 
