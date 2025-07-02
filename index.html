@@ -823,7 +823,7 @@
           </button>
         </div>
         <div class="modal-body">
-          <label for="travelRoleContent">내용</label>
+          <label for="travelRoleContent">内容</label>
           <textarea
             id="travelRoleContent"
             rows="10"
@@ -978,6 +978,37 @@
             취소
           </button>
           <button class="btn-primary" onclick="createExpense()">저장</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave Group Confirmation Modal -->
+    <div id="leaveGroupConfirmModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="leaveGroupModalTitle">모임 나가기</h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('leaveGroupConfirmModal')">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <p id="leaveGroupConfirmText" class="text-lg font-semibold mb-4">
+            정말 이 모임을 나가시겠습니까?
+          </p>
+          <label class="flex items-center mt-4">
+            <input type="checkbox" id="leaveQuietlyCheckbox" class="mr-2" />
+            조용히 나가기
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-secondary"
+            onclick="closeModal('leaveGroupConfirmModal')">
+            취소
+          </button>
+          <button class="btn-red" onclick="confirmLeaveGroup()">나가기</button>
         </div>
       </div>
     </div>
@@ -1361,27 +1392,36 @@
             `;
 
         const groupListDiv = document.getElementById("groupList");
-        mockData.groups.forEach((group) => {
-          const groupCard = document.createElement("div");
-          groupCard.className = "card cursor-pointer";
+        // Filter groups to only show those the current user is a member of
+        const userGroups = mockData.groups.filter((group) =>
+          group.members.includes(mockData.currentUser.id)
+        );
 
-          const memberNames = group.members.map((id) => getUserNameById(id));
-          const membersDisplay =
-            memberNames.length > 5
-              ? `${memberNames.slice(0, 5).join(", ")} 외 ${
-                  memberNames.length - 5
-                }명`
-              : memberNames.join(", ") || "없음";
+        if (userGroups.length === 0) {
+          groupListDiv.innerHTML =
+            '<p class="text-gray-600">참여 중인 모임이 없습니다. 새로운 모임을 생성하거나 초대받으세요!</p>';
+        } else {
+          userGroups.forEach((group) => {
+            const memberNames = group.members.map((id) => getUserNameById(id));
+            const membersDisplay =
+              memberNames.length > 5
+                ? `${memberNames.slice(0, 5).join(", ")} 외 ${
+                    memberNames.length - 5
+                  }명`
+                : memberNames.join(", ") || "없음";
 
-          groupCard.innerHTML = `
-                    <div class="card-title">${group.name}</div>
-                    <div class="card-subtitle">멤버 수: ${group.members.length}명</div>
-                    <p class="card-text"><strong>멤버:</strong> ${membersDisplay}</p>
-                    <p class="card-text">친구들과의 약속, 여행, 생일, 회비를 한 곳에서 관리하세요!</p>
-                `;
-          groupCard.onclick = () => selectGroup(group.id);
-          groupListDiv.appendChild(groupCard);
-        });
+            const groupCard = document.createElement("div");
+            groupCard.className = "card cursor-pointer";
+            groupCard.innerHTML = `
+                        <div class="card-title">${group.name}</div>
+                        <div class="card-subtitle">멤버 수: ${group.members.length}명</div>
+                        <p class="card-text"><strong>멤버:</strong> ${membersDisplay}</p>
+                        <p class="card-text">친구들과의 약속, 여행, 생일, 회비를 한 곳에서 관리하세요!</p>
+                    `;
+            groupCard.onclick = () => selectGroup(group.id);
+            groupListDiv.appendChild(groupCard);
+          });
+        }
 
         // Trigger fade-in for the initial content
         const contentDiv = document.getElementById("content");
@@ -1450,6 +1490,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07L10 6.58"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07L14 17.42"/></svg>
                             초대 링크 복사
                         </button>
+                        <button class="btn btn-red text-sm py-1 px-3 whitespace-nowrap" onclick="openLeaveGroupModal('${currentGroup.id}')">모임 나가기</button>
                         <span class="welcome-message">환영합니다, ${mockData.currentUser.name}님!</span>
                     </div>
                 </header>
@@ -1777,9 +1818,9 @@
             );
             const pStatus = participant ? participant.status : "미정";
             const pReason =
-              participant && participant.reason
+              participant && pStatus === "불참"
                 ? ` (사유: ${participant.reason})`
-                : "";
+                : ""; // Only show reason for '불참'
             const pStatusClass = {
               가능: "possible",
               불참: "impossible",
@@ -1842,9 +1883,9 @@
           );
           const status = participant ? participant.status : "미정";
           const reason =
-            participant && participant.reason
+            participant && status === "불참"
               ? ` (사유: ${participant.reason})`
-              : "";
+              : ""; // Only show reason for '불참'
           const statusClass = {
             가능: "possible",
             불참: "impossible",
@@ -3051,7 +3092,7 @@
         const meeting = currentGroup.meetings.find((m) => m.id === meetingId);
         showMessageBox(
           "재촉 완료",
-          `${userName}님에게 "${meeting.name}" 약속 참여를 재촉했습니다.`
+          `🛎️ ${userName}님에게 "${meeting.name}" 약속 참여를 재촉했습니다.`
         );
         // Re-render to update button state (disabled)
         if (currentTab === "meetings") {
@@ -3078,7 +3119,7 @@
           .join(", ");
         showMessageBox(
           "재촉 완료",
-          `${assignedNames}님에게 "${travel.name}" 여행의 "${roleName}" 업무를 재촉했습니다.`
+          `🛎️ ${assignedNames}님에게 "${travel.name}" 여행의 "${roleName}" 업무를 재촉했습니다.`
         );
         // Re-render to update button state (disabled)
         if (currentTab === "travels") {
@@ -3098,7 +3139,7 @@
         const expense = currentGroup.expenses.find((e) => e.id === expenseId);
         showMessageBox(
           "재촉 완료",
-          `${userName}님에게 "${expense.name}" 회비 제출을 재촉했습니다.`
+          `🛎️ ${userName}님에게 "${expense.name}" 회비 제출을 재촉했습니다.`
         );
         // Re-render to update button state (disabled)
         if (currentTab === "expenses") {
@@ -3284,6 +3325,76 @@
             `;
         // You would typically have a modal and functions to add/view items for custom categories
         // e.g., openModal('customCategoryItemCreateModal', () => setupCustomCategoryItemModal(categoryId));
+      }
+
+      // --- Leave Group Functions ---
+      let leaveGroupId = null; // Stores the ID of the group to be left
+
+      function openLeaveGroupModal(groupId) {
+        leaveGroupId = groupId;
+        const group = mockData.groups.find((g) => g.id === groupId);
+        if (!group) {
+          showMessageBox("오류", "모임을 찾을 수 없습니다.");
+          return;
+        }
+        document.getElementById(
+          "leaveGroupModalTitle"
+        ).textContent = `'${group.name}' 모임 나가기`;
+        document.getElementById(
+          "leaveGroupConfirmText"
+        ).textContent = `정말 '${group.name}' 모임을 나가시겠습니까?`;
+        document.getElementById("leaveQuietlyCheckbox").checked = false; // Reset checkbox state
+        openModal("leaveGroupConfirmModal");
+      }
+
+      function confirmLeaveGroup() {
+        if (!leaveGroupId) return;
+
+        const leaveQuietly = document.getElementById(
+          "leaveQuietlyCheckbox"
+        ).checked;
+        const groupIndex = mockData.groups.findIndex(
+          (g) => g.id === leaveGroupId
+        );
+
+        if (groupIndex === -1) {
+          showMessageBox("오류", "모임을 찾을 수 없습니다.");
+          closeModal("leaveGroupConfirmModal");
+          return;
+        }
+
+        const group = mockData.groups[groupIndex];
+
+        // Remove current user from the group's members list
+        group.members = group.members.filter(
+          (memberId) => memberId !== mockData.currentUser.id
+        );
+
+        // If the group becomes empty, remove it (optional, based on desired behavior)
+        if (group.members.length === 0) {
+          mockData.groups.splice(groupIndex, 1);
+          showMessageBox(
+            "모임 탈퇴 완료",
+            `'${group.name}' 모임에서 성공적으로 탈퇴했으며, 모임에 남은 멤버가 없어 모임이 삭제되었습니다.`
+          );
+        } else {
+          if (leaveQuietly) {
+            showMessageBox(
+              "모임 탈퇴 완료",
+              `'${group.name}' 모임에서 조용히 탈퇴했습니다.`
+            );
+          } else {
+            showMessageBox(
+              "모임 탈퇴 완료",
+              `'${group.name}' 모임에서 탈퇴했습니다.`
+            );
+            // In a real app, you might notify other members here
+          }
+        }
+
+        closeModal("leaveGroupConfirmModal");
+        renderGroupList(); // Go back to group list
+        leaveGroupId = null; // Reset
       }
 
       // --- Initial Load ---
