@@ -46,6 +46,29 @@
         font-weight: 600;
         font-size: 1.5rem;
       }
+      /* Added style for back button in header */
+      header .back-button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        border-radius: 0.75rem;
+        transition: background-color 0.2s ease-in-out;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      header .back-button:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+      header .header-title-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
       nav {
         background-color: #e8f0fe; /* Light blue for nav */
         padding: 0.5rem 2rem;
@@ -1127,14 +1150,23 @@
         const appDiv = document.getElementById("app");
         appDiv.innerHTML = `
                 <header>
-                    <h1>${currentGroup.name} 모임</h1>
+                    <div class="header-title-container">
+                        <button class="back-button" onclick="renderGroupList()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-home">
+                                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                            홈
+                        </button>
+                        <h1>${currentGroup.name} 모임</h1>
+                    </div>
                     <span class="text-xl">환영합니다, ${mockData.currentUser.name}님!</span>
                 </header>
                 <nav id="mainNav">
                     <button id="nav-meetings" onclick="changeTab('meetings')">🗓️ 약속</button>
                     <button id="nav-travels" onclick="changeTab('travels')">✈️ 여행</button>
                     <button id="nav-birthdays" onclick="changeTab('birthdays')">🎁 생일</button>
-                    <button id="nav-expenses" onclick="changeTab('expenses')">� 회비</button>
+                    <button id="nav-expenses" onclick="changeTab('expenses')">💰 회비</button>
                 </nav>
                 <div id="content" class="content fade-in">
                     <!-- Tab content will be rendered here -->
@@ -1890,6 +1922,7 @@
             const dateA = new Date(`${currentYear}-${a.date}`);
             const dateB = new Date(`${currentYear}-${b.date}`);
 
+            // If birthday has passed this year, consider it for next year
             if (dateA < today) dateA.setFullYear(currentYear + 1);
             if (dateB < today) dateB.setFullYear(currentYear + 1);
 
