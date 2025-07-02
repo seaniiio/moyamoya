@@ -1010,19 +1010,19 @@
         currentUser: {
           id: "user-hangseong-i",
           name: "행성이",
-          birthday: "1999-07-01",
+          birthday: "2002-07-01", // Changed to 2002
         },
         users: [
-          { id: "user-soorin", name: "김수린", birthday: "1999-11-05" },
-          { id: "user-siwon", name: "김시원", birthday: "1999-02-26" },
-          { id: "user-yujin", name: "이유진", birthday: "1999-10-30" },
-          { id: "user-boryeong", name: "남보령", birthday: "1999-03-17" },
-          { id: "user-hangseong-i", name: "행성이", birthday: "1999-07-01" },
-          { id: "user-gyeongmin", name: "고경민", birthday: "1999-01-01" },
-          { id: "user-hyeyun", name: "혜윤", birthday: "1999-01-02" },
-          { id: "user-jaeyi", name: "재이", birthday: "1999-01-03" },
-          { id: "user-jisu", name: "지수", birthday: "1999-01-04" },
-          // New users for '우테코 레벨1 리사조'
+          { id: "user-soorin", name: "김수린", birthday: "2002-11-05" }, // Changed to 2002
+          { id: "user-siwon", name: "김시원", birthday: "2002-02-26" }, // Changed to 2002
+          { id: "user-yujin", name: "이유진", birthday: "2002-10-30" }, // Changed to 2002
+          { id: "user-boryeong", name: "남보령", birthday: "2002-03-17" }, // Changed to 2002
+          { id: "user-hangseong-i", name: "행성이", birthday: "2002-07-01" }, // Changed to 2002
+          { id: "user-gyeongmin", name: "고경민", birthday: "2002-01-01" }, // Changed to 2002
+          { id: "user-hyeyun", name: "혜윤", birthday: "2002-01-02" }, // Changed to 2002
+          { id: "user-jaeyi", name: "재이", birthday: "2002-01-03" }, // Changed to 2002
+          { id: "user-jisu", name: "지수", birthday: "2002-01-04" }, // Changed to 2002
+          // New users for '우테코 레벨1 리사조' (unchanged)
           { id: "user-may", name: "메이", birthday: "1999-04-10" },
           { id: "user-minggom", name: "밍곰", birthday: "1999-05-20" },
           { id: "user-pora", name: "포라", birthday: "1999-07-25" },
@@ -1058,6 +1058,7 @@
               { id: "travels", name: "여행", type: "default" },
               { id: "birthdays", name: "생일", type: "default" },
               { id: "expenses", name: "회비", type: "default" },
+              { id: "members", name: "멤버", type: "system" }, // Added members category
             ],
             meetings: [
               {
@@ -1188,6 +1189,7 @@
               { id: "travels", name: "여행", type: "default" },
               { id: "birthdays", name: "생일", type: "default" },
               { id: "expenses", name: "회비", type: "default" },
+              { id: "members", name: "멤버", type: "system" }, // Added members category
             ],
             meetings: [
               {
@@ -1358,9 +1360,19 @@
         mockData.groups.forEach((group) => {
           const groupCard = document.createElement("div");
           groupCard.className = "card cursor-pointer";
+
+          const memberNames = group.members.map((id) => getUserNameById(id));
+          const membersDisplay =
+            memberNames.length > 5
+              ? `${memberNames.slice(0, 5).join(", ")} 외 ${
+                  memberNames.length - 5
+                }명`
+              : memberNames.join(", ") || "없음";
+
           groupCard.innerHTML = `
                     <div class="card-title">${group.name}</div>
                     <div class="card-subtitle">멤버 수: ${group.members.length}명</div>
+                    <p class="card-text"><strong>멤버:</strong> ${membersDisplay}</p>
                     <p class="card-text">친구들과의 약속, 여행, 생일, 회비를 한 곳에서 관리하세요!</p>
                 `;
           groupCard.onclick = () => selectGroup(group.id);
@@ -1408,6 +1420,9 @@
             case "expenses":
               navButtonsHtml += "💰 회비";
               break;
+            case "members":
+              navButtonsHtml += "👥 멤버";
+              break; // Added members tab
             default:
               navButtonsHtml += category.name; // For custom categories
           }
@@ -1488,6 +1503,9 @@
               break;
             case "expenses":
               renderExpenses();
+              break;
+            case "members": // New case for members tab
+              renderMembers();
               break;
             default: // For custom categories
               renderCustomCategoryContent(tabName);
@@ -1686,6 +1704,31 @@
 
         dashboardHtml += `</div>`; // Close grid
         contentDiv.innerHTML = dashboardHtml;
+      }
+
+      // --- Members Tab Function ---
+      function renderMembers() {
+        const contentDiv = document.getElementById("content");
+        let membersHtml = `
+                <h2 class="section-title">👥 멤버 목록</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+            `;
+
+        currentGroup.members.forEach((memberId) => {
+          const userName = getUserNameById(memberId);
+          const userBirthday =
+            mockData.users.find((u) => u.id === memberId)?.birthday ||
+            "정보 없음";
+          membersHtml += `
+                    <div class="card p-4 text-center">
+                        <p class="font-semibold text-lg text-blue-700">${userName}</p>
+                        <p class="text-gray-600 text-sm">생일: ${userBirthday}</p>
+                    </div>
+                `;
+        });
+
+        membersHtml += `</div>`; // Close grid
+        contentDiv.innerHTML = membersHtml;
       }
 
       // --- Meetings Tab Functions ---
@@ -2787,7 +2830,7 @@
             expense.deadline
           }</div>
                     <p class="card-text">
-                        내 상태: <span class="status-badge ${statusClass}">${paidStatusText}</span>
+                        내 상태: <span class="status-badge ${paidStatusClass}">${paidStatusText}</span>
                     </p>
                     <div class="flex gap-2 mt-4">
                         <button class="btn btn-outline" onclick="viewExpenseDetails('${
@@ -2815,11 +2858,11 @@
         currentGroup.members.forEach((memberId) => {
           const payer = expense.payers.find((p) => p.userId === memberId);
           const paidStatus = payer ? payer.paid : false; // Default to false if not found
-          const statusText = paidStatus ? "제출 완료" : "미제출";
+          const statusText = paidStatus ? "제출 완료" : "미제출"; // Defined statusText here
           const statusClass = paidStatus ? "paid" : "unpaid";
           payersHtml += `<li><strong>${getUserNameById(
             memberId
-          )}</strong>: <span class="status-badge ${statusClass}">${status}</span></li>`;
+          )}</strong>: <span class="status-badge ${statusClass}">${statusText}</span></li>`; // Used statusText
         });
         payersHtml += "</ul>";
 
@@ -2944,6 +2987,11 @@
           name: "대시보드",
           type: "system",
         }); // Dashboard is always included
+        selectedCategories.push({
+          id: "members",
+          name: "멤버",
+          type: "system",
+        }); // Members is always included
         defaultCategoryCheckboxes.forEach((checkboxId) => {
           const checkbox = document.getElementById(checkboxId);
           if (checkbox && checkbox.checked) {
@@ -2971,8 +3019,8 @@
           }
         }
 
-        if (selectedCategories.length === 1) {
-          // Only dashboard selected
+        if (selectedCategories.length === 2) {
+          // Only dashboard and members selected
           showMessageBox(
             "카테고리 선택",
             "최소 하나 이상의 카테고리를 선택하거나 추가해야 합니다."
