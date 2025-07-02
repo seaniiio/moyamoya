@@ -671,7 +671,7 @@
           <label for="meetingDate">날짜</label>
           <input type="date" id="meetingDate" required />
 
-          <label for="meetingTime">시간</label>
+          <label for="meetingTime">时间</label>
           <input type="time" id="meetingTime" required />
 
           <label for="meetingPlace">장소</label>
@@ -1580,12 +1580,80 @@
         const contentDiv = document.getElementById("content");
         let dashboardHtml = `
                 <h2 class="section-title">📊 대시보드</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             `;
 
         // Normalize today's date to midnight for consistent comparisons
         const todayNormalized = new Date();
         todayNormalized.setHours(0, 0, 0, 0);
+
+        // 5. My Pending Tasks (New Section - moved to top)
+        let myPendingTasksHtml = "";
+        const myUnrespondedMeetings = currentGroup.meetings.filter((m) => {
+          const participant = m.participants.find(
+            (p) => p.userId === mockData.currentUser.id
+          );
+          return participant && participant.status === "미정";
+        });
+
+        const myUnfinishedTravelRoles = currentGroup.travels.flatMap((t) =>
+          t.roles
+            .filter(
+              (r) =>
+                r.assignedTo.includes(mockData.currentUser.id) &&
+                r.content === ""
+            )
+            .map((r) => ({
+              travelName: t.name,
+              roleName: r.name,
+              travelId: t.id,
+            }))
+        );
+
+        const myUnpaidExpenses = currentGroup.expenses.filter((e) => {
+          const payer = e.payers.find(
+            (p) => p.userId === mockData.currentUser.id
+          );
+          return payer && !payer.paid;
+        });
+
+        if (
+          myUnrespondedMeetings.length > 0 ||
+          myUnfinishedTravelRoles.length > 0 ||
+          myUnpaidExpenses.length > 0
+        ) {
+          myPendingTasksHtml += `
+                    <div class="card md:col-span-2 mb-6"> <!-- Span full width on medium screens, added mb-6 for spacing -->
+                        <div class="card-title">🚨 내가 해야 할 일</div>
+                        <ul class="list-disc pl-5 text-gray-700">
+                `;
+          myUnrespondedMeetings.forEach((m) => {
+            myPendingTasksHtml += `<li>약속: <strong>${m.name}</strong> 참여 여부 결정 <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="openMeetingParticipateModal('${m.id}')">바로가기</button></li>`;
+          });
+          myUnfinishedTravelRoles.forEach((r) => {
+            myPendingTasksHtml += `<li>여행: <strong>${r.travelName}</strong>의 <strong>${r.roleName}</strong> 업무 업데이트 <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="openTravelRoleEditModal('${r.travelId}', '${r.roleName}')">바로가기</button></li>`;
+          });
+          myUnpaidExpenses.forEach((e) => {
+            myPendingTasksHtml += `<li>회비: <strong>${
+              e.name
+            }</strong> ${e.amount.toLocaleString()}원 납부 <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="viewExpenseDetails('${
+              e.id
+            }')">바로가기</button></li>`;
+          });
+          myPendingTasksHtml += `
+                        </ul>
+                    </div>
+                `;
+        } else {
+          myPendingTasksHtml += `
+                    <div class="card md:col-span-2 mb-6"> <!-- Added mb-6 for spacing -->
+                        <div class="card-title">✨ 내가 해야 할 일</div>
+                        <p class="card-text">현재 해야 할 일이 없습니다. 모든 것이 완료되었습니다!</p>
+                    </div>
+                `;
+        }
+        dashboardHtml += myPendingTasksHtml; // Insert pending tasks at the top
+
+        dashboardHtml += `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`; // Start new grid for other cards
 
         // 1. Upcoming Meetings Summary
         const upcomingMeetings = currentGroup.meetings
@@ -2953,7 +3021,7 @@
             const nagKey = `nag-expense-${expense.id}-${memberId}`;
             const canNag =
               !lastNagTimes[nagKey] ||
-              Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
+              Date.Now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
             const nagButtonHtml =
               !pPaidStatus && canNag
                 ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagPayer('${expense.id}', '${memberId}')">🛎️ 재촉</button>`
@@ -3381,7 +3449,7 @@
           return;
         }
 
-        const group = mockData.groups[groupIndex];
+        const group = mockData.groups[group];
 
         // Remove current user from the group's members list
         group.members = group.members.filter(
