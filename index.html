@@ -472,6 +472,95 @@
     </div>
 
     <!-- Modals moved outside the #app container to ensure they are always in DOM -->
+    <!-- Group Create Modal -->
+    <div id="groupCreateModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">새 모임 생성</h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('groupCreateModal')">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <label for="newGroupName">모임 이름</label>
+          <input
+            type="text"
+            id="newGroupName"
+            placeholder="예: 우테코 레벨1 리사조"
+            required />
+
+          <label for="newGroupPassword">모임 비밀번호</label>
+          <input
+            type="password"
+            id="newGroupPassword"
+            placeholder="모임에 참여할 때 필요합니다."
+            required />
+
+          <h3 class="font-semibold text-lg mt-4 mb-2 text-gray-700">
+            카테고리 선택
+          </h3>
+          <div class="grid grid-cols-2 gap-2 mb-4">
+            <label class="flex items-center">
+              <input
+                type="checkbox"
+                id="category-meetings"
+                value="meetings"
+                checked
+                class="mr-2" />
+              약속
+            </label>
+            <label class="flex items-center">
+              <input
+                type="checkbox"
+                id="category-travels"
+                value="travels"
+                checked
+                class="mr-2" />
+              여행
+            </label>
+            <label class="flex items-center">
+              <input
+                type="checkbox"
+                id="category-birthdays"
+                value="birthdays"
+                checked
+                class="mr-2" />
+              생일
+            </label>
+            <label class="flex items-center">
+              <input
+                type="checkbox"
+                id="category-expenses"
+                value="expenses"
+                checked
+                class="mr-2" />
+              회비
+            </label>
+          </div>
+          <div id="customCategoriesContainer">
+            <!-- Custom categories will be added here -->
+          </div>
+          <button
+            class="btn btn-outline w-full mt-2"
+            onclick="addCustomCategoryInput()">
+            + 사용자 정의 카테고리 추가
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-secondary"
+            onclick="closeModal('groupCreateModal')">
+            취소
+          </button>
+          <button class="btn-primary" onclick="createNewGroup()">
+            모임 생성
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Meeting Create Modal -->
     <div id="meetingCreateModal" class="modal-overlay">
       <div class="modal-content">
@@ -615,7 +704,7 @@
           <button
             class="btn-secondary"
             onclick="closeModal('travelCreateModal')">
-            취o소
+            취소
           </button>
           <button class="btn-primary" onclick="createTravel()">저장</button>
         </div>
@@ -821,6 +910,7 @@
           {
             id: "group-311",
             name: "311",
+            password: "311password", // Added password
             members: [
               "user-soorin",
               "user-siwon",
@@ -831,6 +921,14 @@
               "user-hyeyun",
               "user-jaeyi",
               "user-jisu",
+            ],
+            categories: [
+              // Default categories
+              { id: "dashboard", name: "대시보드", type: "system" },
+              { id: "meetings", name: "약속", type: "default" },
+              { id: "travels", name: "여행", type: "default" },
+              { id: "birthdays", name: "생일", type: "default" },
+              { id: "expenses", name: "회비", type: "default" },
             ],
             meetings: [
               {
@@ -937,6 +1035,7 @@
           {
             id: "group-woowacourse-lisa",
             name: "우테코 레벨1 리사조",
+            password: "lisa_password", // Added password
             members: [
               "user-hangseong-i",
               "user-may",
@@ -950,6 +1049,14 @@
               "user-jjanggu",
               "user-gaion",
               "user-flint",
+            ],
+            categories: [
+              // Default categories
+              { id: "dashboard", name: "대시보드", type: "system" },
+              { id: "meetings", name: "약속", type: "default" },
+              { id: "travels", name: "여행", type: "default" },
+              { id: "birthdays", name: "생일", type: "default" },
+              { id: "expenses", name: "회비", type: "default" },
             ],
             meetings: [
               {
@@ -1112,6 +1219,7 @@
                     <div id="groupList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <!-- Group cards will be rendered here -->
                     </div>
+                    <button class="btn btn-blue mt-6 w-full" onclick="openModal('groupCreateModal')">새 모임 생성</button>
                 </div>
             `;
 
@@ -1150,6 +1258,31 @@
       // Renders the group detail page with tabs
       function renderGroupDetail() {
         const appDiv = document.getElementById("app");
+        let navButtonsHtml = "";
+        currentGroup.categories.forEach((category) => {
+          navButtonsHtml += `<button id="nav-${category.id}" onclick="changeTab('${category.id}')">`;
+          switch (category.id) {
+            case "dashboard":
+              navButtonsHtml += "📊 대시보드";
+              break;
+            case "meetings":
+              navButtonsHtml += "🗓️ 약속";
+              break;
+            case "travels":
+              navButtonsHtml += "✈️ 여행";
+              break;
+            case "birthdays":
+              navButtonsHtml += "🎁 생일";
+              break;
+            case "expenses":
+              navButtonsHtml += "💰 회비";
+              break;
+            default:
+              navButtonsHtml += category.name; // For custom categories
+          }
+          navButtonsHtml += `</button>`;
+        });
+
         appDiv.innerHTML = `
                 <header>
                     <div class="header-title-container">
@@ -1162,14 +1295,16 @@
                         </button>
                         <h1>${currentGroup.name} 모임</h1>
                     </div>
-                    <span class="text-xl">환영합니다, ${mockData.currentUser.name}님!</span>
+                    <div class="flex items-center gap-2">
+                        <button class="btn btn-outline text-sm py-1 px-3" onclick="copyInviteLink()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07L10 6.58"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07L14 17.42"/></svg>
+                            초대 링크 복사
+                        </button>
+                        <span class="text-xl">환영합니다, ${mockData.currentUser.name}님!</span>
+                    </div>
                 </header>
                 <nav id="mainNav">
-                    <button id="nav-dashboard" onclick="changeTab('dashboard')">📊 대시보드</button>
-                    <button id="nav-meetings" onclick="changeTab('meetings')">🗓️ 약속</button>
-                    <button id="nav-travels" onclick="changeTab('travels')">✈️ 여행</button>
-                    <button id="nav-birthdays" onclick="changeTab('birthdays')">🎁 생일</button>
-                    <button id="nav-expenses" onclick="changeTab('expenses')">💰 회비</button>
+                    ${navButtonsHtml}
                 </nav>
                 <div id="content" class="content fade-in">
                     <!-- Tab content will be rendered here -->
@@ -1191,7 +1326,10 @@
         navButtons.forEach((button) => {
           button.classList.remove("active");
         });
-        document.getElementById(`nav-${tabName}`).classList.add("active");
+        const activeNavButton = document.getElementById(`nav-${tabName}`);
+        if (activeNavButton) {
+          activeNavButton.classList.add("active");
+        }
 
         const contentDiv = document.getElementById("content");
 
@@ -1219,6 +1357,9 @@
               break;
             case "expenses":
               renderExpenses();
+              break;
+            default: // For custom categories
+              renderCustomCategoryContent(tabName);
               break;
           }
 
@@ -2403,6 +2544,177 @@
           showMessageBox("성공", "회비 제출이 완료되었습니다.");
           renderExpenses(); // Re-render to reflect changes
         }
+      }
+
+      // --- New Group Functions ---
+      let customCategoryCounter = 0; // To ensure unique IDs for custom category inputs
+      function addCustomCategoryInput() {
+        const container = document.getElementById("customCategoriesContainer");
+        const newIndex = customCategoryCounter++;
+        const div = document.createElement("div");
+        div.className = "flex items-center gap-2 mb-2";
+        div.innerHTML = `
+                <input type="text" id="customCategoryName-${newIndex}" placeholder="새 카테고리 이름 (예: 마라톤)" class="flex-1" required>
+                <button class="btn btn-red px-3 py-2 text-sm" onclick="this.parentNode.remove()">삭제</button>
+            `;
+        container.appendChild(div);
+      }
+
+      function createNewGroup() {
+        const newGroupName = document.getElementById("newGroupName").value;
+        const newGroupPassword =
+          document.getElementById("newGroupPassword").value;
+
+        if (!newGroupName || !newGroupPassword) {
+          showMessageBox(
+            "필수 정보 누락",
+            "모임 이름과 비밀번호는 필수 입력 사항입니다."
+          );
+          return;
+        }
+
+        // Get selected default categories
+        const selectedCategories = [];
+        const defaultCategoryCheckboxes = [
+          "category-meetings",
+          "category-travels",
+          "category-birthdays",
+          "category-expenses",
+        ];
+        selectedCategories.push({
+          id: "dashboard",
+          name: "대시보드",
+          type: "system",
+        }); // Dashboard is always included
+        defaultCategoryCheckboxes.forEach((checkboxId) => {
+          const checkbox = document.getElementById(checkboxId);
+          if (checkbox && checkbox.checked) {
+            selectedCategories.push({
+              id: checkbox.value,
+              name: checkbox.labels[0].textContent.trim(),
+              type: "default",
+            });
+          }
+        });
+
+        // Get custom categories
+        for (let i = 0; i < customCategoryCounter; i++) {
+          const customCategoryInput = document.getElementById(
+            `customCategoryName-${i}`
+          );
+          if (customCategoryInput && customCategoryInput.value.trim() !== "") {
+            const customName = customCategoryInput.value.trim();
+            const customId = customName.replace(/\s+/g, "-").toLowerCase(); // Simple ID generation
+            selectedCategories.push({
+              id: customId,
+              name: customName,
+              type: "custom",
+            });
+          }
+        }
+
+        if (selectedCategories.length === 1) {
+          // Only dashboard selected
+          showMessageBox(
+            "카테고리 선택",
+            "최소 하나 이상의 카테고리를 선택하거나 추가해야 합니다."
+          );
+          return;
+        }
+
+        const newGroup = {
+          id: generateUniqueId("group"),
+          name: newGroupName,
+          password: newGroupPassword,
+          members: [mockData.currentUser.id], // Creator is the first member
+          categories: selectedCategories,
+          meetings: [],
+          travels: [],
+          birthdays: [],
+          expenses: [],
+          birthdayAssignmentHistory: [],
+          // Custom category data will be added dynamically if needed
+        };
+
+        // Initialize data structures for selected categories
+        selectedCategories.forEach((cat) => {
+          if (cat.type === "default" || cat.type === "custom") {
+            // For simplicity, custom categories will also be initialized as empty arrays
+            // More complex logic would be needed here to define their specific data structure
+            if (!newGroup[cat.id]) {
+              newGroup[cat.id] = [];
+            }
+          }
+        });
+
+        mockData.groups.push(newGroup);
+        closeModal("groupCreateModal");
+        showMessageBox(
+          "모임 생성 완료",
+          `'${newGroupName}' 모임이 성공적으로 생성되었습니다!`
+        );
+        renderGroupList(); // Re-render group list to show new group
+        // Reset modal inputs
+        document.getElementById("newGroupName").value = "";
+        document.getElementById("newGroupPassword").value = "";
+        defaultCategoryCheckboxes.forEach((checkboxId) => {
+          const checkbox = document.getElementById(checkboxId);
+          if (checkbox) checkbox.checked = true; // Reset to default checked
+        });
+        document.getElementById("customCategoriesContainer").innerHTML = ""; // Clear custom inputs
+        customCategoryCounter = 0;
+      }
+
+      function copyInviteLink() {
+        if (!currentGroup) return;
+        const inviteLink = `모임 이름: ${currentGroup.name}\n비밀번호: ${currentGroup.password}\n(이 링크는 가상 링크이며, 실제 초대 기능은 구현되지 않았습니다.)`;
+
+        // Use document.execCommand('copy') for broader compatibility in iframes
+        const textarea = document.createElement("textarea");
+        textarea.value = inviteLink;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand("copy");
+          showMessageBox(
+            "링크 복사 완료",
+            "모임 정보가 클립보드에 복사되었습니다!"
+          );
+        } catch (err) {
+          showMessageBox(
+            "복사 실패",
+            "클립보드 복사에 실패했습니다. 수동으로 복사해주세요."
+          );
+        }
+        document.body.removeChild(textarea);
+      }
+
+      // Function to render content for custom categories
+      function renderCustomCategoryContent(categoryId) {
+        const contentDiv = document.getElementById("content");
+        const category = currentGroup.categories.find(
+          (c) => c.id === categoryId
+        );
+
+        if (!category) {
+          showMessageBox("오류", "카테고리를 찾을 수 없습니다.");
+          return;
+        }
+
+        // For simplicity, custom categories will display a generic message and a placeholder for items
+        // In a real application, this would involve more complex data structures and UI for each custom type
+        contentDiv.innerHTML = `
+                <div class="section-header">
+                    <h2 class="section-title">${category.name}</h2>
+                    <button class="btn btn-blue" onclick="openModal('customCategoryItemCreateModal')">새 ${category.name} 항목 추가</button>
+                </div>
+                <div id="${categoryId}List">
+                    <p class="text-gray-600">아직 ${category.name} 항목이 없습니다.</p>
+                    <p class="text-gray-500 text-sm mt-2">이것은 사용자 정의 카테고리입니다. 실제 데이터 및 기능은 추가 구현이 필요합니다.</p>
+                </div>
+            `;
+        // You would typically have a modal and functions to add/view items for custom categories
+        // e.g., openModal('customCategoryItemCreateModal', () => setupCustomCategoryItemModal(categoryId));
       }
 
       // --- Initial Load ---
