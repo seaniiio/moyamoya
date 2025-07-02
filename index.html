@@ -45,8 +45,9 @@
         align-items: center;
         font-weight: 600;
         font-size: 1.5rem;
+        flex-wrap: wrap; /* Allow header content to wrap */
+        gap: 1rem; /* Gap between header sections */
       }
-      /* Added style for back button in header */
       header .back-button {
         background: none;
         border: none;
@@ -67,6 +68,32 @@
         display: flex;
         align-items: center;
         gap: 1rem;
+        flex-shrink: 0; /* Prevent shrinking too much */
+      }
+      header .header-right-section {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem; /* Reduced gap for better fit */
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        justify-content: flex-end; /* Align to end when wrapped */
+        flex-grow: 1; /* Allow it to take available space */
+        min-width: 0; /* Allow content to shrink */
+      }
+      header .header-right-section .welcome-message {
+        font-size: 1rem; /* Default smaller font for welcome message */
+        white-space: normal; /* Allow wrapping on small screens */
+        flex-shrink: 0; /* Prevent welcome message from shrinking */
+        text-align: right; /* Align text to right within its space */
+      }
+      @media (min-width: 768px) {
+        /* Adjust for larger screens */
+        header .header-right-section {
+          gap: 1rem; /* Restore larger gap on larger screens */
+        }
+        header .header-right-section .welcome-message {
+          font-size: 1.25rem; /* Larger font on larger screens */
+          white-space: nowrap; /* Keep on one line for larger screens */
+        }
       }
 
       nav {
@@ -304,14 +331,16 @@
         background-color: #2c8b46;
         box-shadow: 0 6px 15px rgba(52, 168, 83, 0.4);
       }
+      /* Modified .btn-outline for always visible white background */
       .btn-outline {
-        background-color: transparent;
-        color: #4285f4;
-        border: 1px solid #4285f4;
-        box-shadow: none;
+        background-color: #ffffff; /* Default white background */
+        color: #4285f4; /* Blue text */
+        border: 1px solid #4285f4; /* Blue border */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
       }
       .btn-outline:hover {
-        background-color: #e8f0fe;
+        background-color: #f0f0f0; /* Slightly darker white/light gray on hover */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Slightly more prominent shadow on hover */
       }
 
       .section-header {
@@ -429,6 +458,23 @@
           font-size: 1.25rem;
           border-top-left-radius: 1rem;
           border-top-right-radius: 1rem;
+          flex-direction: column; /* Stack items vertically on small screens */
+          align-items: flex-start; /* Align to start when stacked */
+          gap: 0.5rem; /* Smaller gap when stacked */
+        }
+        header .header-title-container {
+          width: 100%; /* Take full width */
+          justify-content: flex-start; /* Align title to start */
+        }
+        header .header-right-section {
+          width: 100%; /* Take full width */
+          justify-content: flex-start; /* Align right section to start when stacked */
+          flex-wrap: wrap; /* Ensure buttons/text wrap if needed */
+          gap: 0.5rem; /* Smaller gap for wrapped items */
+        }
+        header .header-right-section .welcome-message {
+          font-size: 0.9rem; /* Even smaller font on very small screens */
+          white-space: normal; /* Allow welcome message to wrap */
         }
         nav {
           flex-wrap: wrap;
@@ -1295,12 +1341,12 @@
                         </button>
                         <h1>${currentGroup.name} 모임</h1>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button class="btn btn-outline text-sm py-1 px-3" onclick="copyInviteLink()">
+                    <div class="header-right-section">
+                        <button class="btn btn-outline text-sm py-1 px-3 whitespace-nowrap" onclick="copyInviteLink()">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07L10 6.58"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07L14 17.42"/></svg>
                             초대 링크 복사
                         </button>
-                        <span class="text-xl">환영합니다, ${mockData.currentUser.name}님!</span>
+                        <span class="welcome-message">환영합니다, ${mockData.currentUser.name}님!</span>
                     </div>
                 </header>
                 <nav id="mainNav">
@@ -1999,7 +2045,7 @@
                 </select>
                 <button class="btn btn-red px-3 py-2 text-sm" onclick="this.parentNode.remove()">삭제</button>
             `;
-        container.appendChild(roleDiv);
+        container.appendChild(div);
       }
 
       function createTravel() {
@@ -2429,7 +2475,7 @@
             expense.deadline
           }</div>
                     <p class="card-text">
-                        내 상태: <span class="status-badge ${paidStatusClass}">${paidStatusText}</span>
+                        내 상태: <span class="status-badge ${statusClass}">${paidStatusText}</span>
                     </p>
                     <div class="flex gap-2 mt-4">
                         <button class="btn btn-outline" onclick="viewExpenseDetails('${
