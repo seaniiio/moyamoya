@@ -885,7 +885,7 @@
           </button>
         </div>
         <div class="modal-body">
-          <p id="birthdayAssignInfo" class="text-lg mb-4 text-gray-700"></p>
+          <p id="birthdayAssignInfo" class="text-lg font-semibold mb-4"></p>
           <p class="text-md text-gray-600">
             선택된 담당자: <strong id="assignedBirthdayPerson">미지정</strong>
           </p>
@@ -1291,6 +1291,10 @@
       let selectedTravelRoleName = null; // For travel role edit modal
       let selectedBirthdayUserId = null; // For birthday prepare modal
       let selectedExpenseId = null; // For expense submission
+
+      // Global object to store last nag times for cooldown
+      const lastNagTimes = {};
+      const COOLDOWN_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
       // Utility function to get user name by ID
       function getUserNameById(userId) {
@@ -1766,6 +1770,37 @@
 
           const meetingCard = document.createElement("div");
           meetingCard.className = "card";
+          let participantsHtml = "";
+          currentGroup.members.forEach((memberId) => {
+            const participant = meeting.participants.find(
+              (p) => p.userId === memberId
+            );
+            const pStatus = participant ? participant.status : "미정";
+            const pReason =
+              participant && participant.reason
+                ? ` (사유: ${participant.reason})`
+                : "";
+            const pStatusClass = {
+              가능: "possible",
+              불참: "impossible",
+              미정: "pending",
+            }[pStatus];
+            const nagKey = `nag-meeting-${meeting.id}-${memberId}`;
+            const canNag =
+              !lastNagTimes[nagKey] ||
+              Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
+            const nagButtonHtml =
+              pStatus === "미정" && canNag
+                ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagParticipant('${meeting.id}', '${memberId}')">🛎️ 재촉</button>`
+                : pStatus === "미정" && !canNag
+                ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>`
+                : "";
+
+            participantsHtml += `<li><strong>${getUserNameById(
+              memberId
+            )}</strong>: <span class="status-badge ${pStatusClass}">${pStatus}</span>${pReason}${nagButtonHtml}</li>`;
+          });
+
           meetingCard.innerHTML = `
                     <div class="card-title">${meeting.name}</div>
                     <div class="card-subtitle">${meeting.date} ${
@@ -1815,9 +1850,20 @@
             불참: "impossible",
             미정: "pending",
           }[status];
+          const nagKey = `nag-meeting-${meetingId}-${memberId}`;
+          const canNag =
+            !lastNagTimes[nagKey] ||
+            Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
+          const nagButtonHtml =
+            status === "미정" && canNag
+              ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagParticipant('${meetingId}', '${memberId}')">🛎️ 재촉</button>`
+              : status === "미정" && !canNag
+              ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>`
+              : "";
+
           participantsHtml += `<li><strong>${getUserNameById(
             memberId
-          )}</strong>: <span class="status-badge ${statusClass}">${status}</span>${reason}</li>`;
+          )}</strong>: <span class="status-badge ${statusClass}">${status}</span>${reason}${nagButtonHtml}</li>`;
         });
         participantsHtml += "</ul>";
 
@@ -2132,10 +2178,25 @@
           const assignedNames =
             role.assignedTo.map((id) => getUserNameById(id)).join(", ") ||
             "미지정";
+          const nagKey = `nag-travel-role-${travel.id}-${role.name}`;
+          const canNag =
+            !lastNagTimes[nagKey] ||
+            Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
+          const nagButtonHtml =
+            role.content === "" && role.assignedTo.length > 0 && canNag // Nag if content is empty AND someone is assigned
+              ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagRole('${
+                  travel.id
+                }', '${role.name}', '${role.assignedTo.join(
+                  ","
+                )}')">🛎️ 재촉</button>`
+              : role.content === "" && role.assignedTo.length > 0 && !canNag
+              ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>`
+              : "";
+
           rolesHtml += `
                     <div class="role-item">
                         <strong>${role.name}</strong>
-                        <span>${assignedNames}</span>
+                        <span>${assignedNames}${nagButtonHtml}</span>
                     </div>
                 `;
         });
@@ -2824,6 +2885,27 @@
 
           const expenseCard = document.createElement("div");
           expenseCard.className = "card";
+          let payersHtml = "";
+          currentGroup.members.forEach((memberId) => {
+            const payer = expense.payers.find((p) => p.userId === memberId);
+            const pPaidStatus = payer ? payer.paid : false;
+            const pStatusText = pPaidStatus ? "제출 완료" : "미제출";
+            const pStatusClass = pPaidStatus ? "paid" : "unpaid";
+            const nagKey = `nag-expense-${expense.id}-${memberId}`;
+            const canNag =
+              !lastNagTimes[nagKey] ||
+              Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
+            const nagButtonHtml =
+              !pPaidStatus && canNag
+                ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagPayer('${expense.id}', '${memberId}')">🛎️ 재촉</button>`
+                : !pPaidStatus && !canNag
+                ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>`
+                : "";
+            payersHtml += `<li><strong>${getUserNameById(
+              memberId
+            )}</strong>: <span class="status-badge ${pStatusClass}">${pStatusText}</span>${nagButtonHtml}</li>`;
+          });
+
           expenseCard.innerHTML = `
                     <div class="card-title">${expense.name}</div>
                     <div class="card-subtitle">금액: ${expense.amount.toLocaleString()}원 | 마감일: ${
@@ -2860,9 +2942,19 @@
           const paidStatus = payer ? payer.paid : false; // Default to false if not found
           const statusText = paidStatus ? "제출 완료" : "미제출"; // Defined statusText here
           const statusClass = paidStatus ? "paid" : "unpaid";
+          const nagKey = `nag-expense-${expense.id}-${memberId}`;
+          const canNag =
+            !lastNagTimes[nagKey] ||
+            Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
+          const nagButtonHtml =
+            !paidStatus && canNag
+              ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagPayer('${expense.id}', '${memberId}')">🛎️ 재촉</button>`
+              : !paidStatus && !canNag
+              ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>`
+              : "";
           payersHtml += `<li><strong>${getUserNameById(
             memberId
-          )}</strong>: <span class="status-badge ${statusClass}">${statusText}</span></li>`; // Used statusText
+          )}</strong>: <span class="status-badge ${statusClass}">${statusText}</span>${nagButtonHtml}</li>`; // Used statusText
         });
         payersHtml += "</ul>";
 
@@ -2944,6 +3036,77 @@
           payer.paid = true;
           showMessageBox("성공", "회비 제출이 완료되었습니다.");
           renderExpenses(); // Re-render to reflect changes
+        }
+      }
+
+      // --- Nag Functions ---
+      function nagParticipant(meetingId, userId) {
+        const nagKey = `nag-meeting-${meetingId}-${userId}`;
+        if (Date.now() - (lastNagTimes[nagKey] || 0) < COOLDOWN_DURATION) {
+          showMessageBox("알림", "잠시 후 다시 시도해주세요. (5분 쿨다운)");
+          return;
+        }
+        lastNagTimes[nagKey] = Date.now();
+        const userName = getUserNameById(userId);
+        const meeting = currentGroup.meetings.find((m) => m.id === meetingId);
+        showMessageBox(
+          "재촉 완료",
+          `${userName}님에게 "${meeting.name}" 약속 참여를 재촉했습니다.`
+        );
+        // Re-render to update button state (disabled)
+        if (currentTab === "meetings") {
+          // Only re-render if on the meetings tab
+          renderMeetings();
+        } else if (document.getElementById("meetingDetailsView")) {
+          // If on detail view
+          viewMeetingDetails(meetingId);
+        }
+      }
+
+      function nagRole(travelId, roleName, assignedToIdsString) {
+        // assignedToIdsString is comma-separated
+        const assignedToIds = assignedToIdsString.split(",");
+        const nagKey = `nag-travel-role-${travelId}-${roleName}`;
+        if (Date.now() - (lastNagTimes[nagKey] || 0) < COOLDOWN_DURATION) {
+          showMessageBox("알림", "잠시 후 다시 시도해주세요. (5분 쿨다운)");
+          return;
+        }
+        lastNagTimes[nagKey] = Date.now();
+        const travel = currentGroup.travels.find((t) => t.id === travelId);
+        const assignedNames = assignedToIds
+          .map((id) => getUserNameById(id))
+          .join(", ");
+        showMessageBox(
+          "재촉 완료",
+          `${assignedNames}님에게 "${travel.name}" 여행의 "${roleName}" 업무를 재촉했습니다.`
+        );
+        // Re-render to update button state (disabled)
+        if (currentTab === "travels") {
+          // Only re-render if on the travels tab
+          viewTravelDetails(travelId);
+        }
+      }
+
+      function nagPayer(expenseId, userId) {
+        const nagKey = `nag-expense-${expenseId}-${userId}`;
+        if (Date.now() - (lastNagTimes[nagKey] || 0) < COOLDOWN_DURATION) {
+          showMessageBox("알림", "잠시 후 다시 시도해주세요. (5분 쿨다운)");
+          return;
+        }
+        lastNagTimes[nagKey] = Date.now();
+        const userName = getUserNameById(userId);
+        const expense = currentGroup.expenses.find((e) => e.id === expenseId);
+        showMessageBox(
+          "재촉 완료",
+          `${userName}님에게 "${expense.name}" 회비 제출을 재촉했습니다.`
+        );
+        // Re-render to update button state (disabled)
+        if (currentTab === "expenses") {
+          // Only re-render if on the expenses tab
+          renderExpenses();
+        } else if (document.getElementById("expenseDetailsView")) {
+          // If on detail view
+          viewExpenseDetails(expenseId);
         }
       }
 
