@@ -781,6 +781,18 @@
           { id: "user-hyeyun", name: "혜윤", birthday: "1999-01-02" },
           { id: "user-jaeyi", name: "재이", birthday: "1999-01-03" },
           { id: "user-jisu", name: "지수", birthday: "1999-01-04" },
+          // New users for '우테코 레벨1 리사조'
+          { id: "user-may", name: "메이", birthday: "1999-04-10" },
+          { id: "user-minggom", name: "밍곰", birthday: "1999-05-20" },
+          { id: "user-pora", name: "포라", birthday: "1999-07-25" },
+          { id: "user-meonggu", name: "멍구", birthday: "1999-08-15" },
+          { id: "user-lisa", name: "리사", birthday: "1999-09-01" },
+          { id: "user-dompu", name: "돔푸", birthday: "1999-10-10" },
+          { id: "user-jensen", name: "젠슨", birthday: "1999-11-20" },
+          { id: "user-popo", name: "포포", birthday: "1999-12-05" },
+          { id: "user-jjanggu", name: "짱구", birthday: "1999-01-25" },
+          { id: "user-gaion", name: "가이온", birthday: "1999-02-14" },
+          { id: "user-flint", name: "플린트", birthday: "1999-03-03" },
         ],
         groups: [
           {
@@ -899,6 +911,112 @@
             ],
             birthdayAssignmentHistory: [], // To track who has been assigned for birthdays
           },
+          {
+            id: "group-woowacourse-lisa",
+            name: "우테코 레벨1 리사조",
+            members: [
+              "user-hangseong-i",
+              "user-may",
+              "user-minggom",
+              "user-pora",
+              "user-meonggu",
+              "user-lisa",
+              "user-dompu",
+              "user-jensen",
+              "user-popo",
+              "user-jjanggu",
+              "user-gaion",
+              "user-flint",
+            ],
+            meetings: [
+              {
+                id: "meeting-level3-dinner",
+                name: "레벨3 회식",
+                date: "2025-07-15",
+                time: "18:00",
+                place: "잠실역",
+                memo: "레벨3 우리 캠퍼스는 함께하지 못해도 회식은 함께해요.",
+                creator: "돔푸",
+                participants: [
+                  { userId: "user-may", status: "가능", reason: "" },
+                  { userId: "user-minggom", status: "가능", reason: "" },
+                  { userId: "user-pora", status: "가능", reason: "" },
+                  { userId: "user-meonggu", status: "가능", reason: "" },
+                  {
+                    userId: "user-lisa",
+                    status: "불참",
+                    reason: "대학원 issue..",
+                  },
+                  { userId: "user-hangseong-i", status: "미정", reason: "" }, // Current user
+                  { userId: "user-dompu", status: "가능", reason: "" }, // Creator
+                  { userId: "user-jensen", status: "미정", reason: "" },
+                  { userId: "user-popo", status: "미정", reason: "" },
+                  { userId: "user-jjanggu", status: "미정", reason: "" },
+                  { userId: "user-gaion", status: "미정", reason: "" },
+                  { userId: "user-flint", status: "미정", reason: "" },
+                ],
+              },
+            ],
+            travels: [
+              {
+                id: "travel-woowacourse-graduation",
+                name: "우테코 졸업 여행",
+                startDate: "2025-11-20",
+                endDate: "2025-11-21",
+                memo: "우테코 졸업 축하 기념 부산 여행",
+                roles: [
+                  { name: "숙소", assignedTo: "user-minggom", content: "" },
+                  {
+                    name: "관광",
+                    assignedTo: "user-may",
+                    content:
+                      "롯데 자이언츠 vs 키움 히어로즈 야구를 보러 갑니다",
+                  },
+                  { name: "장보기", assignedTo: "user-jensen", content: "" },
+                  { name: "총무", assignedTo: "user-jjanggu", content: "" },
+                  {
+                    name: "맛집 찾기",
+                    assignedTo: "user-meonggu",
+                    content: "",
+                  },
+                  { name: "맛집 찾기", assignedTo: "user-pora", content: "" }, // Assuming multiple people can be assigned to '맛집 찾기'
+                ],
+              },
+            ],
+            birthdays: [
+              {
+                userId: "user-pora",
+                date: "07-25",
+                assignedTo: "user-minggom",
+                preparation:
+                  "포라 생일 🤙🏽 콜고(콜미고수) 초고(초딩고수) 생일 축하해요",
+              },
+            ],
+            expenses: [
+              {
+                id: "expense-dinner-settlement",
+                name: "회식 정산",
+                amount: 20000,
+                deadline: "2025-07-20",
+                penalty: "릴스 찍어서 크루위키에 올리기",
+                payers: [
+                  { userId: "user-hangseong-i", paid: true },
+                  { userId: "user-may", paid: true },
+                  { userId: "user-minggom", paid: true },
+                  { userId: "user-pora", paid: true },
+                  { userId: "user-meonggu", paid: true },
+                  { userId: "user-lisa", paid: true },
+                  { userId: "user-dompu", paid: true },
+                  { userId: "user-jensen", paid: true },
+                  { userId: "user-popo", paid: true },
+                  { userId: "user-jjanggu", paid: true },
+                  { userId: "user-gaion", paid: true },
+                  { userId: "user-flint", paid: false }, // 플린트 빼고 모두 제출
+                ],
+              },
+            ],
+            birthdayAssignmentHistory: [],
+          },
         ],
       };
 
@@ -1016,7 +1134,7 @@
                     <button id="nav-meetings" onclick="changeTab('meetings')">🗓️ 약속</button>
                     <button id="nav-travels" onclick="changeTab('travels')">✈️ 여행</button>
                     <button id="nav-birthdays" onclick="changeTab('birthdays')">🎁 생일</button>
-                    <button id="nav-expenses" onclick="changeTab('expenses')">💰 회비</button>
+                    <button id="nav-expenses" onclick="changeTab('expenses')">� 회비</button>
                 </nav>
                 <div id="content" class="content fade-in">
                     <!-- Tab content will be rendered here -->
@@ -1500,7 +1618,8 @@
       }
 
       let roleInputCounter = 0;
-      function addRoleInput(roleName = "", assignedToName = "") {
+      function addRoleInput(roleName = "", assignedToId = "") {
+        // Changed assignedToName to assignedToId
         const container = document.getElementById("roleAssignmentContainer");
         const newRoleIndex = roleInputCounter++; // Use a counter for unique IDs
 
@@ -1514,7 +1633,7 @@
                       .map(
                         (user) =>
                           `<option value="${user.id}" ${
-                            user.name === assignedToName ? "selected" : ""
+                            user.id === assignedToId ? "selected" : ""
                           }>${user.name}</option>`
                       )
                       .join("")}
@@ -1742,11 +1861,13 @@
 
         if (unassignedBirthdays.length === 0) {
           // If all birthdays have been assigned, reset the assignment history for a new cycle
+          // The current user (행성이) is excluded from being assigned their own birthday.
+          // So, the number of assignable members is `currentGroup.members.length - 1`.
+          const assignableMembersCount = currentGroup.members.length - 1;
           if (
-            currentGroup.birthdayAssignmentHistory.length ===
-            currentGroup.members.length - 1
+            currentGroup.birthdayAssignmentHistory.length >=
+            assignableMembersCount
           ) {
-            // -1 because birthday person is excluded
             currentGroup.birthdayAssignmentHistory = [];
             showMessageBox(
               "알림",
@@ -1819,7 +1940,40 @@
             "알림",
             "모든 친구가 한 번씩 생일 담당을 했습니다. 새로운 담당자 지정 주기가 시작됩니다!"
           );
-          assignBirthdayHandler(); // Recursively call to assign in new cycle
+          // After resetting history, try to assign again. This handles the case where all members *except* the birthday person have been assigned.
+          // We need to re-filter potential assignees after resetting history.
+          const newPotentialAssignees = currentGroup.members.filter(
+            (memberId) =>
+              memberId !== birthdayToAssign.userId &&
+              !currentGroup.birthdayAssignmentHistory.includes(memberId)
+          );
+          if (newPotentialAssignees.length === 0) {
+            showMessageBox(
+              "알림",
+              "현재 담당자로 지정할 수 있는 친구가 없습니다. 모든 친구가 이미 담당했습니다."
+            );
+            closeModal("birthdayAssignModal");
+            return;
+          }
+          const randomIndex = Math.floor(
+            Math.random() * newPotentialAssignees.length
+          );
+          const assignedUserId = newPotentialAssignees[randomIndex];
+          birthdayToAssign.assignedTo = assignedUserId;
+          currentGroup.birthdayAssignmentHistory.push(assignedUserId);
+          document.getElementById("assignedBirthdayPerson").textContent =
+            getUserNameById(assignedUserId);
+          closeModal("birthdayAssignModal");
+          showMessageBox(
+            "성공",
+            `${getUserNameById(
+              birthdayToAssign.userId
+            )}의 생일 담당자로 ${getUserNameById(
+              assignedUserId
+            )}님이 지정되었습니다. (새 주기 시작)`
+          );
+          renderBirthdays();
+          selectedBirthdayUserId = null;
           return;
         }
 
