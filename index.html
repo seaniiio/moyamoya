@@ -615,7 +615,7 @@
           <button
             class="btn-secondary"
             onclick="closeModal('travelCreateModal')">
-            취소
+            취o소
           </button>
           <button class="btn-primary" onclick="createTravel()">저장</button>
         </div>
@@ -868,8 +868,8 @@
               {
                 id: "travel-1",
                 name: "베트남 다낭",
-                startDate: "2025-06-27",
-                endDate: "2025-07-01",
+                startDate: "2026-06-27", // Changed year to 2026
+                endDate: "2026-07-01", // Changed year to 2026
                 memo: "",
                 roles: [
                   {
@@ -1045,7 +1045,7 @@
 
       // Global state variables
       let currentGroup = null;
-      let currentTab = "meetings"; // Default tab
+      let currentTab = "dashboard"; // Default tab changed to dashboard
       let selectedMeetingId = null; // For meeting participation modal
       let selectedTravelId = null; // For travel role edit modal
       let selectedTravelRoleName = null; // For travel role edit modal
@@ -1139,6 +1139,8 @@
       function selectGroup(groupId) {
         currentGroup = mockData.groups.find((g) => g.id === groupId);
         if (currentGroup) {
+          // Set default tab to dashboard when entering a group
+          currentTab = "dashboard";
           renderGroupDetail();
         } else {
           showMessageBox("오류", "모임을 찾을 수 없습니다.");
@@ -1163,6 +1165,7 @@
                     <span class="text-xl">환영합니다, ${mockData.currentUser.name}님!</span>
                 </header>
                 <nav id="mainNav">
+                    <button id="nav-dashboard" onclick="changeTab('dashboard')">📊 대시보드</button>
                     <button id="nav-meetings" onclick="changeTab('meetings')">🗓️ 약속</button>
                     <button id="nav-travels" onclick="changeTab('travels')">✈️ 여행</button>
                     <button id="nav-birthdays" onclick="changeTab('birthdays')">🎁 생일</button>
@@ -1202,6 +1205,9 @@
 
           // Render new content based on the selected tab
           switch (tabName) {
+            case "dashboard":
+              renderDashboard();
+              break;
             case "meetings":
               renderMeetings();
               break;
@@ -1226,6 +1232,186 @@
           contentDiv.classList.remove("fade-out");
           contentDiv.classList.remove("fade-in"); // This will trigger the transition to opacity: 1
         }, 300); // Match this timeout with the CSS transition duration (0.3s)
+      }
+
+      // --- Dashboard Tab Function ---
+      function renderDashboard() {
+        const contentDiv = document.getElementById("content");
+        let dashboardHtml = `
+                <h2 class="section-title">📊 대시보드</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            `;
+
+        // Normalize today's date to midnight for consistent comparisons
+        const todayNormalized = new Date();
+        todayNormalized.setHours(0, 0, 0, 0);
+
+        // 1. Upcoming Meetings Summary
+        const upcomingMeetings = currentGroup.meetings
+          .filter((m) => {
+            const meetingDate = new Date(m.date);
+            meetingDate.setHours(0, 0, 0, 0); // Normalize meeting date to midnight
+            return meetingDate >= todayNormalized;
+          })
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .slice(0, 3); // Show up to 3 upcoming meetings
+
+        dashboardHtml += `
+                <div class="card">
+                    <div class="card-title">🗓️ 다가오는 약속</div>
+                    ${
+                      upcomingMeetings.length > 0
+                        ? `
+                        <ul class="list-disc pl-5 text-gray-700">
+                            ${upcomingMeetings
+                              .map(
+                                (m) => `
+                                <li><strong>${m.name}</strong>: ${m.date} ${m.time} (${m.place})</li>
+                            `
+                              )
+                              .join("")}
+                        </ul>
+                    `
+                        : `<p class="card-text">다가오는 약속이 없습니다.</p>`
+                    }
+                    <button class="btn btn-outline mt-4" onclick="changeTab('meetings')">약속 전체 보기</button>
+                </div>
+            `;
+
+        // 2. Planned Travels Summary (Includes current and upcoming)
+        const plannedTravels = currentGroup.travels
+          .filter((t) => {
+            const endDate = new Date(t.endDate);
+            endDate.setHours(0, 0, 0, 0); // Normalize end date to midnight
+            return endDate >= todayNormalized; // Travel is relevant if its end date is today or in the future
+          })
+          .sort((a, b) => {
+            // Sort by start date, so the nearest upcoming or current travel appears first
+            const startDateA = new Date(a.startDate);
+            const startDateB = new Date(b.startDate);
+            return startDateA - startDateB;
+          })
+          .slice(0, 1); // Show only the next relevant travel for brevity on dashboard
+
+        dashboardHtml += `
+                <div class="card">
+                    <div class="card-title">✈️ 계획된 여행</div>
+                    ${
+                      plannedTravels.length > 0
+                        ? `
+                        ${plannedTravels
+                          .map(
+                            (t) => `
+                            <p class="card-subtitle">${t.name} (${
+                              t.startDate
+                            } ~ ${t.endDate})</p>
+                            <p class="card-text">역할: ${t.roles
+                              .map(
+                                (r) =>
+                                  `${r.name} (${getUserNameById(r.assignedTo)})`
+                              )
+                              .join(", ")}</p>
+                        `
+                          )
+                          .join('<hr class="my-4"/>')}
+                    `
+                        : `<p class="card-text">계획된 여행이 없습니다.</p>`
+                    }
+                    <button class="btn btn-outline mt-4" onclick="changeTab('travels')">여행 전체 보기</button>
+                </div>
+            `;
+
+        // 3. Upcoming Birthdays Summary
+        const upcomingBirthdays = currentGroup.birthdays
+          .filter((b) => {
+            const bDateThisYear = new Date(
+              `${todayNormalized.getFullYear()}-${b.date}`
+            );
+            // If birthday has passed this year, consider it for next year
+            if (bDateThisYear < todayNormalized) {
+              bDateThisYear.setFullYear(todayNormalized.getFullYear() + 1);
+            }
+            return bDateThisYear >= todayNormalized; // Only show birthdays that are today or in the future
+          })
+          .sort((a, b) => {
+            const dateA = new Date(
+              `${todayNormalized.getFullYear()}-${a.date}`
+            );
+            const dateB = new Date(
+              `${todayNormalized.getFullYear()}-${b.date}`
+            );
+            if (dateA < todayNormalized)
+              dateA.setFullYear(todayNormalized.getFullYear() + 1);
+            if (dateB < todayNormalized)
+              dateB.setFullYear(todayNormalized.getFullYear() + 1);
+            return dateA - dateB;
+          })
+          .slice(0, 3); // Show up to 3 nearest birthdays
+
+        dashboardHtml += `
+                <div class="card">
+                    <div class="card-title">🎁 다가오는 생일</div>
+                    ${
+                      upcomingBirthdays.length > 0
+                        ? `
+                        <ul class="list-disc pl-5 text-gray-700">
+                            ${upcomingBirthdays
+                              .map(
+                                (b) => `
+                                <li><strong>${getUserNameById(
+                                  b.userId
+                                )}</strong>: ${b.date} (${
+                                  b.assignedTo
+                                    ? getUserNameById(b.assignedTo) + " 담당"
+                                    : "담당자 미지정"
+                                })</li>
+                            `
+                              )
+                              .join("")}
+                        </ul>
+                    `
+                        : `<p class="card-text">다가오는 생일이 없습니다.</p>`
+                    }
+                    <button class="btn btn-outline mt-4" onclick="changeTab('birthdays')">생일 전체 보기</button>
+                </div>
+            `;
+
+        // 4. Pending Expenses Summary
+        const pendingExpenses = currentGroup.expenses.filter((e) => {
+          const currentUserPayer = e.payers.find(
+            (p) => p.userId === mockData.currentUser.id
+          );
+          return currentUserPayer && !currentUserPayer.paid;
+        });
+
+        dashboardHtml += `
+                <div class="card">
+                    <div class="card-title">💰 미납 회비</div>
+                    ${
+                      pendingExpenses.length > 0
+                        ? `
+                        <ul class="list-disc pl-5 text-gray-700">
+                            ${pendingExpenses
+                              .map(
+                                (e) => `
+                                <li><strong>${
+                                  e.name
+                                }</strong>: ${e.amount.toLocaleString()}원 (마감일: ${
+                                  e.deadline
+                                })</li>
+                            `
+                              )
+                              .join("")}
+                        </ul>
+                    `
+                        : `<p class="card-text">미납된 회비가 없습니다.</p>`
+                    }
+                    <button class="btn btn-outline mt-4" onclick="changeTab('expenses')">회비 전체 보기</button>
+                </div>
+            `;
+
+        dashboardHtml += `</div>`; // Close grid
+        contentDiv.innerHTML = dashboardHtml;
       }
 
       // --- Meetings Tab Functions ---
@@ -1658,7 +1844,7 @@
         const roleDiv = document.createElement("div");
         roleDiv.className = "flex items-center gap-2 mb-2";
         roleDiv.innerHTML = `
-                <input type="text" id="roleName-${newRoleIndex}" placeholder="역할 이름 (예: 숙소)" value="${roleName}" class="flex-1">
+                <input type="text" id="roleName-${newRoleIndex}" placeholder="역할 이름 (예: 숙소)" class="flex-1" value="${roleName}">
                 <select id="roleAssignee-${newRoleIndex}" class="flex-1 p-2 border rounded-lg">
                     <option value="">담당자 선택</option>
                     ${mockData.users
@@ -1923,8 +2109,8 @@
             const dateB = new Date(`${currentYear}-${b.date}`);
 
             // If birthday has passed this year, consider it for next year
-            if (dateA < today) dateA.setFullYear(currentYear + 1);
-            if (dateB < today) dateB.setFullYear(currentYear + 1);
+            if (dateA < today) dateA.setFullYear(today.getFullYear() + 1);
+            if (dateB < today) dateB.setFullYear(today.getFullYear() + 1);
 
             return dateA - dateB;
           }
