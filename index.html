@@ -419,6 +419,10 @@
         background-color: #fffbe6;
         color: #fbbc04;
       }
+      .status-badge.voted {
+        background-color: #e0e0ff;
+        color: #673ab7;
+      } /* New color for voted status */
       .status-badge.paid {
         background-color: #e6ffe6;
         color: #34a853;
@@ -653,7 +657,7 @@
     <div id="meetingCreateModal" class="modal-overlay">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title">새 약속 생성</h2>
+          <h2 class="modal-title" id="meetingCreateModalTitle">새 약속 생성</h2>
           <button
             class="modal-close-button"
             onclick="closeModal('meetingCreateModal')">
@@ -661,31 +665,77 @@
           </button>
         </div>
         <div class="modal-body">
-          <label for="meetingName">약속 이름</label>
-          <input
-            type="text"
-            id="meetingName"
-            placeholder="예: 311 정기 모임"
-            required />
+          <div id="meetingTypeSelection" class="mb-4">
+            <button
+              class="btn btn-blue w-full mb-2"
+              onclick="showFixedTimeForm()">
+              약속 시간 지정
+            </button>
+            <button class="btn btn-outline w-full" onclick="showVoteTimeForm()">
+              약속 시간 투표
+            </button>
+          </div>
 
-          <label for="meetingDate">날짜</label>
-          <input type="date" id="meetingDate" required />
+          <div id="fixedTimeForm" class="hidden">
+            <label for="fixedMeetingName">약속 이름</label>
+            <input
+              type="text"
+              id="fixedMeetingName"
+              placeholder="예: 311 정기 모임"
+              required />
 
-          <label for="meetingTime">时间</label>
-          <input type="time" id="meetingTime" required />
+            <label for="fixedMeetingDate">날짜</label>
+            <input type="date" id="fixedMeetingDate" required />
 
-          <label for="meetingPlace">장소</label>
-          <input
-            type="text"
-            id="meetingPlace"
-            placeholder="예: 오목교 경성주막"
-            required />
+            <label for="fixedMeetingTime">시간</label>
+            <input type="time" id="fixedMeetingTime" required />
 
-          <label for="meetingMemo">메모 (선택 사항)</label>
-          <textarea
-            id="meetingMemo"
-            rows="3"
-            placeholder="추가 설명"></textarea>
+            <label for="fixedMeetingPlace">장소</label>
+            <input
+              type="text"
+              id="fixedMeetingPlace"
+              placeholder="예: 오목교 경성주막"
+              required />
+
+            <label for="fixedMeetingMemo">메모 (선택 사항)</label>
+            <textarea
+              id="fixedMeetingMemo"
+              rows="3"
+              placeholder="추가 설명"></textarea>
+          </div>
+
+          <div id="voteTimeForm" class="hidden">
+            <label for="voteMeetingName">약속 이름</label>
+            <input
+              type="text"
+              id="voteMeetingName"
+              placeholder="예: 연말 파티 투표"
+              required />
+
+            <label for="voteMeetingPlace">장소 (선택 사항)</label>
+            <input
+              type="text"
+              id="voteMeetingPlace"
+              placeholder="예: 홍대 파티룸" />
+
+            <h3 class="font-semibold text-lg mt-4 mb-2 text-gray-700">
+              투표 후보 시간
+            </h3>
+            <div id="voteOptionsContainer">
+              <!-- Vote options will be dynamically added here -->
+            </div>
+            <button
+              class="btn btn-outline w-full mt-4"
+              onclick="addVoteOptionInput()">
+              + 후보 시간 추가
+            </button>
+
+            <label for="voteMeetingMemo">메모 (선택 사항)</label>
+            <textarea
+              id="voteMeetingMemo"
+              rows="3"
+              placeholder="추가 설명"></textarea>
+          </div>
         </div>
         <div class="modal-footer">
           <button
@@ -693,7 +743,12 @@
             onclick="closeModal('meetingCreateModal')">
             취소
           </button>
-          <button class="btn-primary" onclick="createMeeting()">저장</button>
+          <button
+            class="btn-primary"
+            id="saveMeetingButton"
+            onclick="saveMeeting()">
+            저장
+          </button>
         </div>
       </div>
     </div>
@@ -1095,6 +1150,7 @@
               {
                 id: "meeting-1",
                 name: "311 정기 모임",
+                type: "fixed", // Added type
                 date: "2025-07-05",
                 time: "20:00",
                 place: "오목교 경성주막",
@@ -1108,18 +1164,46 @@
               },
               {
                 id: "meeting-2",
-                name: "연말 파티",
-                date: "2025-12-28",
-                time: "20:00",
-                place: "홍대 파티룸",
-                memo: "",
-                creator: "김수린",
+                name: "저녁 약속 투표", // Changed name
+                type: "vote",
+                place: "합정", // Changed place
+                memo: "늦참은 절대 no", // Changed memo
+                creator: "남보령", // Changed creator
+                voteOptions: [
+                  {
+                    id: "option-1",
+                    date: "2025-07-15",
+                    time: "18:00",
+                    voters: ["user-soorin", "user-yujin"],
+                  }, // Updated voters
+                  {
+                    id: "option-2",
+                    date: "2025-07-15",
+                    time: "19:00",
+                    voters: ["user-boryeong"],
+                  }, // Updated voters
+                  {
+                    id: "option-3",
+                    date: "2025-07-15",
+                    time: "20:00",
+                    voters: ["user-siwon"],
+                  }, // Updated voters
+                ],
                 participants: [
-                  { userId: "user-soorin", status: "가능", reason: "" },
-                  { userId: "user-boryeong", status: "가능", reason: "" },
-                  { userId: "user-siwon", status: "가능", reason: "" },
-                  { userId: "user-yujin", status: "가능", reason: "" },
-                  { userId: "user-hangseong-i", status: "미정", reason: "" }, // Current user initial status
+                  // Overall participation for vote meetings
+                  { userId: "user-soorin", status: "voted", reason: "" },
+                  { userId: "user-siwon", status: "voted", reason: "" },
+                  { userId: "user-yujin", status: "voted", reason: "" },
+                  {
+                    userId: "user-boryeong",
+                    status: "pending_vote",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-hangseong-i",
+                    status: "pending_vote",
+                    reason: "",
+                  }, // Current user
                 ],
               },
             ],
@@ -1223,7 +1307,7 @@
               // Default categories
               { id: "dashboard", name: "대시보드", type: "system" },
               { id: "meetings", name: "약속", type: "default" },
-              { id: "travels", name: "여행", type: "default" },
+              { id: "travels", type: "default" },
               { id: "birthdays", name: "생일", type: "default" },
               { id: "expenses", name: "회비", type: "default" },
               { id: "members", name: "멤버", type: "system" }, // Added members category
@@ -1232,6 +1316,7 @@
               {
                 id: "meeting-level3-dinner",
                 name: "레벨3 회식",
+                type: "fixed", // Added type
                 date: "2025-07-15",
                 time: "18:00",
                 place: "잠실역",
@@ -1592,7 +1677,13 @@
           const participant = m.participants.find(
             (p) => p.userId === mockData.currentUser.id
           );
-          return participant && participant.status === "미정";
+          // For fixed meetings, status '미정' means unresponded
+          // For vote meetings, status 'pending_vote' means unresponded
+          return (
+            participant &&
+            (participant.status === "미정" ||
+              participant.status === "pending_vote")
+          );
         });
 
         const myUnfinishedTravelRoles = currentGroup.travels.flatMap((t) =>
@@ -1627,7 +1718,7 @@
                         <ul class="list-disc pl-5 text-gray-700">
                 `;
           myUnrespondedMeetings.forEach((m) => {
-            myPendingTasksHtml += `<li>약속: <strong>${m.name}</strong> 참여 여부 결정 <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="openMeetingParticipateModal('${m.id}')">바로가기</button></li>`;
+            myPendingTasksHtml += `<li>약속: <strong>${m.name}</strong> 참여 여부 결정 <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="viewMeetingDetails('${m.id}')">바로가기</button></li>`;
           });
           myUnfinishedTravelRoles.forEach((r) => {
             myPendingTasksHtml += `<li>여행: <strong>${r.travelName}</strong>의 <strong>${r.roleName}</strong> 업무 업데이트 <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="openTravelRoleEditModal('${r.travelId}', '${r.roleName}')">바로가기</button></li>`;
@@ -1658,11 +1749,43 @@
         // 1. Upcoming Meetings Summary
         const upcomingMeetings = currentGroup.meetings
           .filter((m) => {
-            const meetingDate = new Date(m.date);
-            meetingDate.setHours(0, 0, 0, 0); // Normalize meeting date to midnight
-            return meetingDate >= todayNormalized;
+            // Filter for fixed meetings or vote meetings that are not yet finalized (or still relevant)
+            if (m.type === "fixed") {
+              const meetingDate = new Date(m.date);
+              meetingDate.setHours(0, 0, 0, 0);
+              return meetingDate >= todayNormalized;
+            } else if (m.type === "vote") {
+              // For vote meetings, consider them "upcoming" if any option is in the future
+              return m.voteOptions.some((opt) => {
+                const optionDate = new Date(opt.date);
+                optionDate.setHours(0, 0, 0, 0);
+                return optionDate >= todayNormalized;
+              });
+            }
+            return false;
           })
-          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .sort((a, b) => {
+            // Sort by the earliest date available (either fixed date or earliest vote option date)
+            const dateA =
+              a.type === "fixed"
+                ? new Date(a.date)
+                : new Date(
+                    a.voteOptions.sort(
+                      (opt1, opt2) => new Date(opt1.date) - new Date(opt2.date)
+                    )[0]?.date || "9999-12-31"
+                  );
+            const dateB =
+              b.type === "fixed"
+                ? new Date(b.date)
+                : new Date(
+                    b.voteOptions.sort(
+                      (opt1, opt2) => new Date(opt1.date) - new Date(opt2.date)
+                    )[0]?.date || "9999-12-31"
+                  );
+            dateA.setHours(0, 0, 0, 0);
+            dateB.setHours(0, 0, 0, 0);
+            return dateA - dateB;
+          })
           .slice(0, 3); // Show up to 3 upcoming meetings
 
         dashboardHtml += `
@@ -1675,7 +1798,11 @@
                             ${upcomingMeetings
                               .map(
                                 (m) => `
-                                <li><strong>${m.name}</strong>: ${m.date} ${m.time} (${m.place})</li>
+                                <li><strong>${m.name}</strong>: ${
+                                  m.type === "fixed"
+                                    ? `${m.date} ${m.time} (${m.place})`
+                                    : "투표 진행 중"
+                                }</li>
                             `
                               )
                               .join("")}
@@ -1792,7 +1919,7 @@
           const currentUserPayer = e.payers.find(
             (p) => p.userId === mockData.currentUser.id
           );
-          return currentUserPayer && !currentUserPayer.paid;
+          return currentUserPayer && !currentUserPayer.paid; // Corrected: use currentUserPayer.paid
         });
 
         dashboardHtml += `
@@ -1881,62 +2008,40 @@
             가능: "possible",
             불참: "impossible",
             미정: "pending",
+            pending_vote: "pending",
+            voted: "voted",
           }[statusText];
 
           const meetingCard = document.createElement("div");
           meetingCard.className = "card";
-          let participantsHtml = "";
-          currentGroup.members.forEach((memberId) => {
-            const participant = meeting.participants.find(
-              (p) => p.userId === memberId
-            );
-            const pStatus = participant ? participant.status : "미정";
-            const pReason =
-              participant && pStatus === "불참"
-                ? ` (사유: ${participant.reason})`
-                : ""; // Only show reason for '불참'
-            const pStatusClass = {
-              가능: "possible",
-              불참: "impossible",
-              미정: "pending",
-            }[pStatus];
-            const nagKey = `nag-meeting-${meeting.id}-${memberId}`;
-            const canNag =
-              !lastNagTimes[nagKey] ||
-              Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
-            const nagButtonHtml =
-              pStatus === "미정" && canNag
-                ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagParticipant('${meeting.id}', '${memberId}')">🛎️ 재촉</button>`
-                : pStatus === "미정" && !canNag
-                ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>`
-                : "";
 
-            participantsHtml += `<li><strong>${getUserNameById(
-              memberId
-            )}</strong>: <span class="status-badge ${pStatusClass}">${pStatus}</span>${pReason}${nagButtonHtml}</li>`;
-          });
+          let meetingDisplayInfo = "";
+          if (meeting.type === "fixed") {
+            meetingDisplayInfo = `${meeting.date} ${meeting.time} | ${meeting.place}`;
+          } else if (meeting.type === "vote") {
+            const totalVotes = meeting.voteOptions.reduce(
+              (sum, option) => sum + option.voters.length,
+              0
+            );
+            meetingDisplayInfo = `투표 진행 중 (${totalVotes}표)`;
+            if (meeting.place) meetingDisplayInfo += ` | ${meeting.place}`;
+          }
 
           meetingCard.innerHTML = `
                     <div class="card-title">${meeting.name}</div>
-                    <div class="card-subtitle">${meeting.date} ${
-            meeting.time
-          } | ${meeting.place}</div>
+                    <div class="card-subtitle">${meetingDisplayInfo}</div>
                     <p class="card-text">
-                        참여 현황: ${
-                          meeting.participants
-                            .filter((p) => p.status === "가능")
-                            .map((p) => getUserNameById(p.userId))
-                            .join(", ") || "없음"
-                        }
-                        <span class="status-badge ${statusClass}">내 상태: ${statusText}</span>
+                        내 상태: <span class="status-badge ${statusClass}">${statusText}</span>
                     </p>
                     <div class="flex gap-2 mt-4">
                         <button class="btn btn-outline" onclick="viewMeetingDetails('${
                           meeting.id
                         }')">상세 보기</button>
-                        <button class="btn btn-green" onclick="openMeetingParticipateModal('${
-                          meeting.id
-                        }')">참여/불참</button>
+                        ${
+                          meeting.type === "fixed"
+                            ? `<button class="btn btn-green" onclick="openMeetingParticipateModal('${meeting.id}')">참여/불참</button>`
+                            : `<button class="btn btn-green" onclick="viewMeetingDetails('${meeting.id}')">투표하기</button>`
+                        }
                     </div>
                 `;
           meetingsListDiv.appendChild(meetingCard);
@@ -1950,37 +2055,131 @@
           return;
         }
 
-        let participantsHtml = "<ul>";
-        currentGroup.members.forEach((memberId) => {
-          const participant = meeting.participants.find(
-            (p) => p.userId === memberId
-          );
-          const status = participant ? participant.status : "미정";
-          const reason =
-            participant && status === "불참"
-              ? ` (사유: ${participant.reason})`
-              : ""; // Only show reason for '불참'
-          const statusClass = {
-            가능: "possible",
-            불참: "impossible",
-            미정: "pending",
-          }[status];
-          const nagKey = `nag-meeting-${meetingId}-${memberId}`;
-          const canNag =
-            !lastNagTimes[nagKey] ||
-            Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
-          const nagButtonHtml =
-            status === "미정" && canNag
-              ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagParticipant('${meetingId}', '${memberId}')">🛎️ 재촉</button>`
-              : status === "미정" && !canNag
-              ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>`
-              : "";
+        let detailsHtml = "";
+        if (meeting.type === "fixed") {
+          let participantsHtml = "<ul>";
+          currentGroup.members.forEach((memberId) => {
+            const participant = meeting.participants.find(
+              (p) => p.userId === memberId
+            );
+            const status = participant ? participant.status : "미정";
+            const reason =
+              participant && status === "불참"
+                ? ` (사유: ${participant.reason})`
+                : ""; // Only show reason for '불참'
+            const statusClass = {
+              가능: "possible",
+              불참: "impossible",
+              미정: "pending",
+            }[status];
+            const nagKey = `nag-meeting-${meetingId}-${memberId}`;
+            const canNag =
+              !lastNagTimes[nagKey] ||
+              Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
+            const nagButtonHtml =
+              status === "미정" && canNag
+                ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagParticipant('${meetingId}', '${memberId}')">🛎️ 재촉</button>`
+                : status === "미정" && !canNag
+                ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>`
+                : "";
 
-          participantsHtml += `<li><strong>${getUserNameById(
-            memberId
-          )}</strong>: <span class="status-badge ${statusClass}">${status}</span>${reason}${nagButtonHtml}</li>`;
-        });
-        participantsHtml += "</ul>";
+            participantsHtml += `<li><strong>${getUserNameById(
+              memberId
+            )}</strong>: <span class="status-badge ${statusClass}">${status}</span>${reason}${nagButtonHtml}</li>`;
+          });
+          participantsHtml += "</ul>";
+
+          detailsHtml = `
+                    <div class="detail-item">
+                        <h3>약속 정보</h3>
+                        <p><strong>날짜:</strong> ${meeting.date}</p>
+                        <p><strong>시간:</strong> ${meeting.time}</p>
+                        <p><strong>장소:</strong> ${meeting.place}</p>
+                        <p><strong>생성자:</strong> ${meeting.creator}</p>
+                        <p><strong>메모:</strong> ${meeting.memo || "없음"}</p>
+                    </div>
+                    <div class="detail-item">
+                        <h3>참여 현황</h3>
+                        ${participantsHtml}
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button class="btn btn-green" onclick="openMeetingParticipateModal('${
+                          meeting.id
+                        }')">내 참여 상태 변경</button>
+                    </div>
+                `;
+        } else if (meeting.type === "vote") {
+          let voteOptionsHtml = "";
+          meeting.voteOptions.forEach((option) => {
+            const userVoted = option.voters.includes(mockData.currentUser.id);
+            const voteButtonHtml = !userVoted
+              ? `<button class="btn btn-blue text-xs py-1 px-2 ml-2" onclick="castVote('${meeting.id}', '${option.id}')">투표</button>`
+              : `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>투표 완료</button>`;
+
+            voteOptionsHtml += `
+                        <div class="detail-item">
+                            <p><strong>날짜:</strong> ${option.date}</p>
+                            <p><strong>시간:</strong> ${option.time}</p>
+                            <p><strong>투표 인원:</strong> ${
+                              option.voters
+                                .map((id) => getUserNameById(id))
+                                .join(", ") || "없음"
+                            } (${option.voters.length}명)</p>
+                            <div class="flex gap-2 mt-2">
+                                ${voteButtonHtml}
+                            </div>
+                        </div>
+                    `;
+          });
+
+          // Section for nagging non-voters
+          const allVotersForMeeting = new Set(
+            meeting.voteOptions.flatMap((opt) => opt.voters)
+          );
+          const nonVoters = currentGroup.members.filter(
+            (memberId) => !allVotersForMeeting.has(memberId)
+          );
+
+          let nonVotersNagHtml = "";
+          if (nonVoters.length > 0) {
+            nonVotersNagHtml += `
+                        <div class="detail-item mt-4">
+                            <h3>미투표 멤버 재촉</h3>
+                            <ul class="list-disc pl-5 text-gray-700">
+                    `;
+            nonVoters.forEach((memberId) => {
+              const nagKey = `nag-meeting-vote-overall-${meetingId}-${memberId}`;
+              const canNag =
+                !lastNagTimes[nagKey] ||
+                Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
+              const nagButtonHtml = canNag
+                ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagParticipant('${meetingId}', '${memberId}', '투표')">🛎️ 재촉</button>`
+                : `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>`;
+              nonVotersNagHtml += `<li><strong>${getUserNameById(
+                memberId
+              )}</strong>${nagButtonHtml}</li>`;
+            });
+            nonVotersNagHtml += `
+                            </ul>
+                        </div>
+                    `;
+          }
+
+          detailsHtml = `
+                    <div class="detail-item">
+                        <h3>약속 정보</h3>
+                        <p><strong>약속 이름:</strong> ${meeting.name}</p>
+                        <p><strong>장소:</strong> ${meeting.place || "미정"}</p>
+                        <p><strong>생성자:</strong> ${meeting.creator}</p>
+                        <p><strong>메모:</strong> ${meeting.memo || "없음"}</p>
+                    </div>
+                    <div class="detail-item">
+                        <h3>투표 후보</h3>
+                        ${voteOptionsHtml}
+                    </div>
+                    ${nonVotersNagHtml}
+                `;
+        }
 
         const contentDiv = document.getElementById("content");
         contentDiv.innerHTML = `
@@ -1988,60 +2187,213 @@
                     <h2 class="section-title">🗓️ ${meeting.name} 상세</h2>
                     <button class="btn btn-outline" onclick="changeTab('meetings')">목록으로 돌아가기</button>
                 </div>
-                <div class="detail-item">
-                    <h3>약속 정보</h3>
-                    <p><strong>날짜:</strong> ${meeting.date}</p>
-                    <p><strong>시간:</strong> ${meeting.time}</p>
-                    <p><strong>장소:</strong> ${meeting.place}</p>
-                    <p><strong>생성자:</strong> ${meeting.creator}</p>
-                    <p><strong>메모:</strong> ${meeting.memo || "없음"}</p>
-                </div>
-                <div class="detail-item">
-                    <h3>참여 현황</h3>
-                    ${participantsHtml}
-                </div>
-                <div class="flex gap-2 mt-4">
-                    <button class="btn btn-green" onclick="openMeetingParticipateModal('${
-                      meeting.id
-                    }')">내 참여 상태 변경</button>
-                </div>
+                ${detailsHtml}
             `;
       }
 
-      function createMeeting() {
-        const name = document.getElementById("meetingName").value;
-        const date = document.getElementById("meetingDate").value;
-        const time = document.getElementById("meetingTime").value;
-        const place = document.getElementById("meetingPlace").value;
-        const memo = document.getElementById("meetingMemo").value;
+      // Modified to show meeting type selection
+      function openMeetingCreateModal() {
+        const modalTitle = document.getElementById("meetingCreateModalTitle");
+        const meetingTypeSelection = document.getElementById(
+          "meetingTypeSelection"
+        );
+        const fixedTimeForm = document.getElementById("fixedTimeForm");
+        const voteTimeForm = document.getElementById("voteTimeForm");
+        const saveMeetingButton = document.getElementById("saveMeetingButton");
 
-        if (!name || !date || !time || !place) {
-          showMessageBox(
-            "필수 정보 누락",
-            "약속 이름, 날짜, 시간, 장소는 필수 입력 사항입니다."
+        modalTitle.textContent = "새 약속 생성";
+        meetingTypeSelection.classList.remove("hidden");
+        fixedTimeForm.classList.add("hidden");
+        voteTimeForm.classList.add("hidden");
+        saveMeetingButton.classList.add("hidden"); // Hide save button initially
+
+        // Reset all form fields
+        document.getElementById("fixedMeetingName").value = "";
+        document.getElementById("fixedMeetingDate").value = "";
+        document.getElementById("fixedMeetingTime").value = "";
+        document.getElementById("fixedMeetingPlace").value = "";
+        document.getElementById("fixedMeetingMemo").value = "";
+
+        document.getElementById("voteMeetingName").value = "";
+        document.getElementById("voteMeetingPlace").value = "";
+        document.getElementById("voteMeetingMemo").value = "";
+        document.getElementById("voteOptionsContainer").innerHTML = ""; // Clear vote options
+        voteOptionCounter = 0; // Reset vote option counter
+
+        openModal("meetingCreateModal");
+      }
+
+      function showFixedTimeForm() {
+        document.getElementById("meetingTypeSelection").classList.add("hidden");
+        document.getElementById("fixedTimeForm").classList.remove("hidden");
+        document.getElementById("voteTimeForm").classList.add("hidden");
+        document.getElementById("saveMeetingButton").classList.remove("hidden");
+        document.getElementById("saveMeetingButton").onclick = () =>
+          saveMeeting("fixed");
+      }
+
+      function showVoteTimeForm() {
+        document.getElementById("meetingTypeSelection").classList.add("hidden");
+        document.getElementById("fixedTimeForm").classList.add("hidden");
+        document.getElementById("voteTimeForm").classList.remove("hidden");
+        document.getElementById("saveMeetingButton").classList.remove("hidden");
+        document.getElementById("saveMeetingButton").onclick = () =>
+          saveMeeting("vote");
+        addVoteOptionInput(); // Add first vote option input
+      }
+
+      let voteOptionCounter = 0;
+      function addVoteOptionInput(date = "", time = "") {
+        const container = document.getElementById("voteOptionsContainer");
+        const newIndex = voteOptionCounter++;
+        const div = document.createElement("div");
+        div.className = "flex items-center gap-2 mb-2";
+        div.innerHTML = `
+                <input type="date" id="voteOptionDate-${newIndex}" class="flex-1" value="${date}" required>
+                <input type="time" id="voteOptionTime-${newIndex}" class="flex-1" value="${time}" required>
+                <button class="btn btn-red px-3 py-2 text-sm" onclick="this.parentNode.remove()">삭제</button>
+            `;
+        container.appendChild(div);
+      }
+
+      function saveMeeting(type) {
+        let newMeeting = {};
+
+        if (type === "fixed") {
+          const name = document.getElementById("fixedMeetingName").value;
+          const date = document.getElementById("fixedMeetingDate").value;
+          const time = document.getElementById("fixedMeetingTime").value;
+          const place = document.getElementById("fixedMeetingPlace").value;
+          const memo = document.getElementById("fixedMeetingMemo").value;
+
+          if (!name || !date || !time || !place) {
+            showMessageBox(
+              "필수 정보 누락",
+              "약속 이름, 날짜, 시간, 장소는 필수 입력 사항입니다."
+            );
+            return;
+          }
+
+          newMeeting = {
+            id: generateUniqueId("meeting"),
+            name,
+            type: "fixed",
+            date,
+            time,
+            place,
+            memo,
+            creator: mockData.currentUser.name,
+            participants: currentGroup.members.map((userId) => ({
+              userId: userId,
+              status: userId === mockData.currentUser.id ? "가능" : "미정",
+              reason: "",
+            })),
+          };
+        } else if (type === "vote") {
+          const name = document.getElementById("voteMeetingName").value;
+          const place = document.getElementById("voteMeetingPlace").value;
+          const memo = document.getElementById("voteMeetingMemo").value;
+
+          if (!name) {
+            showMessageBox(
+              "필수 정보 누락",
+              "약속 이름은 필수 입력 사항입니다."
+            );
+            return;
+          }
+
+          const voteOptions = [];
+          const voteOptionInputs = document.querySelectorAll(
+            "#voteOptionsContainer .flex.items-center.gap-2.mb-2"
           );
-          return;
-        }
+          if (voteOptionInputs.length === 0) {
+            showMessageBox(
+              "필수 정보 누락",
+              "최소 하나 이상의 투표 후보 시간을 추가해야 합니다."
+            );
+            return;
+          }
+          voteOptionInputs.forEach((optionDiv, index) => {
+            const dateInput = optionDiv.querySelector(`input[type="date"]`);
+            const timeInput = optionDiv.querySelector(`input[type="time"]`);
+            if (dateInput && timeInput && dateInput.value && timeInput.value) {
+              voteOptions.push({
+                id: `option-${index}`,
+                date: dateInput.value,
+                time: timeInput.value,
+                voters: [],
+              });
+            }
+          });
 
-        const newMeeting = {
-          id: generateUniqueId("meeting"),
-          name,
-          date,
-          time,
-          place,
-          memo,
-          creator: mockData.currentUser.name,
-          participants: currentGroup.members.map((userId) => ({
-            userId: userId,
-            status: userId === mockData.currentUser.id ? "가능" : "미정", // Default current user to '가능'
-            reason: "",
-          })),
-        };
+          if (voteOptions.length === 0) {
+            showMessageBox(
+              "필수 정보 누락",
+              "유효한 투표 후보 시간을 최소 하나 이상 입력해야 합니다."
+            );
+            return;
+          }
+
+          newMeeting = {
+            id: generateUniqueId("meeting"),
+            name,
+            type: "vote",
+            place,
+            memo,
+            creator: mockData.currentUser.name,
+            voteOptions: voteOptions,
+            participants: currentGroup.members.map((userId) => ({
+              // Participants tracked for overall meeting
+              userId: userId,
+              status: "pending_vote", // New status for voting meetings
+              reason: "",
+            })),
+          };
+        }
 
         currentGroup.meetings.push(newMeeting);
         closeModal("meetingCreateModal");
         showMessageBox("성공", "새 약속이 생성되었습니다.");
         renderMeetings();
+      }
+
+      function castVote(meetingId, optionId) {
+        const meeting = currentGroup.meetings.find((m) => m.id === meetingId);
+        if (!meeting || meeting.type !== "vote") return;
+
+        const option = meeting.voteOptions.find((opt) => opt.id === optionId);
+        if (!option) return;
+
+        // Toggle vote: if user already voted for this option, remove; otherwise, add.
+        const userIndex = option.voters.indexOf(mockData.currentUser.id);
+        if (userIndex > -1) {
+          option.voters.splice(userIndex, 1); // Remove vote
+          showMessageBox(
+            "투표 취소",
+            `"${meeting.name}"의 "${option.date} ${option.time}" 투표를 취소했습니다.`
+          );
+        } else {
+          option.voters.push(mockData.currentUser.id); // Add vote
+          showMessageBox(
+            "투표 완료",
+            `"${meeting.name}"의 "${option.date} ${option.time}"에 투표했습니다.`
+          );
+        }
+
+        // Update participant status if they have voted for at least one option
+        const currentUserParticipation = meeting.participants.find(
+          (p) => p.userId === mockData.currentUser.id
+        );
+        if (currentUserParticipation) {
+          const hasVotedAnywhere = meeting.voteOptions.some((opt) =>
+            opt.voters.includes(mockData.currentUser.id)
+          );
+          currentUserParticipation.status = hasVotedAnywhere
+            ? "voted"
+            : "pending_vote";
+        }
+
+        viewMeetingDetails(meetingId); // Re-render to update vote counts and button states
       }
 
       function openMeetingParticipateModal(meetingId) {
@@ -3021,7 +3373,7 @@
             const nagKey = `nag-expense-${expense.id}-${memberId}`;
             const canNag =
               !lastNagTimes[nagKey] ||
-              Date.Now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
+              Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
             const nagButtonHtml =
               !pPaidStatus && canNag
                 ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagPayer('${expense.id}', '${memberId}')">🛎️ 재촉</button>`
@@ -3167,7 +3519,8 @@
       }
 
       // --- Nag Functions ---
-      function nagParticipant(meetingId, userId) {
+      function nagParticipant(meetingId, userId, nagType = "참여") {
+        // Added nagType
         const nagKey = `nag-meeting-${meetingId}-${userId}`;
         if (Date.now() - (lastNagTimes[nagKey] || 0) < COOLDOWN_DURATION) {
           showMessageBox("알림", "잠시 후 다시 시도해주세요. (5분 쿨다운)");
@@ -3178,8 +3531,8 @@
         const meeting = currentGroup.meetings.find((m) => m.id === meetingId);
         showMessageBox(
           "재촉 완료",
-          `🛎️ ${userName}님에게 "${meeting.name}" 약속 참여를 재촉했습니다.`
-        );
+          `🛎️ ${userName}님에게 "${meeting.name}" 약속 ${nagType}를 재촉했습니다.`
+        ); // Dynamic message
         // Re-render to update button state (disabled)
         if (currentTab === "meetings") {
           // Only re-render if on the meetings tab
@@ -3449,7 +3802,7 @@
           return;
         }
 
-        const group = mockData.groups[group];
+        const group = mockData.groups[groupIndex]; // Get the actual group object
 
         // Remove current user from the group's members list
         group.members = group.members.filter(
