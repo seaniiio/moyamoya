@@ -2,7 +2,7 @@
 
 ## 🔗 배포 url
 
-https://preview--moyamoya.lovable.app/
+https://seaniiio.github.io/moyamoya/
 
 ## 핵심 가치
 
