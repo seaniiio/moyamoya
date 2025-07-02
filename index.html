@@ -1221,18 +1221,37 @@
                     name: "숙소",
                     assignedTo: ["user-soorin"],
                     content: `🏨 다낭 호텔 정리\n\n📍네스타호텔 6/27~28 (1박)\nhttps://maps.app.goo.gl/cDvcXLRYXCg6EBHJA?g_st=com.google.maps.preview.copy\n📍코지다낭 부티크 호텔 6/28~30 (2박)\nhttps://maps.app.goo.gl/zq9Q3Mt6SqVzhSBy8?g_st=com.google.maps.preview.copy\n\n✔️호텔은 2명씩 방 4개 예약\n✔️네스타는 해안쪽, 코지다낭은 도심쪽\n✔️아고다로 예약, 캐쉬백은 들어오는데로 환급 예정`,
-                  },
+                    comments: [],
+                  }, // Added comments array
                   {
                     name: "관광",
                     assignedTo: ["user-hangseong-i"],
                     content: `🚐인천공항까지 가는 콜벤🚐\n\n1) 당산역에서 오전 2시 (김시원, 고경민)\n2) 목동 41타워에서 오전 2시 10분 (남보령, 혜윤, 재이, 김수린, 지수)\n3) 목동고에서 오전 2시 20분 (이유진)\n\n*절대 늦지 말고 시간 엄수!! 2),3)에서 타는 사람들은 5분씩 일찍 와서 기다리자~!!\n\n* 금액: 175,000원 (1인당 21,875원)`,
+                    comments: [
+                      {
+                        userId: "user-soorin",
+                        timestamp: "2025-06-28T10:00:00Z",
+                        text: "콜벤 예약 잘 부탁해!",
+                      },
+                    ],
+                  }, // Added comments array
+                  {
+                    name: "장보기",
+                    assignedTo: ["user-yujin"],
+                    content: "",
+                    comments: [],
                   },
-                  { name: "장보기", assignedTo: ["user-yujin"], content: "" },
-                  { name: "총무", assignedTo: ["user-siwon"], content: "" },
+                  {
+                    name: "총무",
+                    assignedTo: ["user-siwon"],
+                    content: "",
+                    comments: [],
+                  },
                   {
                     name: "맛집 찾기",
                     assignedTo: ["user-boryeong"],
                     content: "",
+                    comments: [],
                   },
                 ],
               },
@@ -1351,19 +1370,36 @@
                 memo: "우테코 졸업 축하 기념 부산 여행",
                 notice: "여행 장소가 국내 다른 지역으로 바뀔 수 있습니다~", // Added notice
                 roles: [
-                  { name: "숙소", assignedTo: ["user-minggom"], content: "" },
+                  {
+                    name: "숙소",
+                    assignedTo: ["user-minggom"],
+                    content: "",
+                    comments: [],
+                  }, // Added comments array
                   {
                     name: "관광",
                     assignedTo: ["user-may"],
                     content:
                       "롯데 자이언츠 vs 키움 히어로즈 야구를 보러 갑니다",
+                    comments: [],
+                  }, // Added comments array
+                  {
+                    name: "장보기",
+                    assignedTo: ["user-jensen"],
+                    content: "",
+                    comments: [],
                   },
-                  { name: "장보기", assignedTo: ["user-jensen"], content: "" },
-                  { name: "총무", assignedTo: ["user-jjanggu"], content: "" },
+                  {
+                    name: "총무",
+                    assignedTo: ["user-jjanggu"],
+                    content: "",
+                    comments: [],
+                  },
                   {
                     name: "맛집 찾기",
                     assignedTo: ["user-meonggu", "user-pora"],
                     content: "",
+                    comments: [],
                   }, // Multiple assignees
                 ],
               },
@@ -2676,6 +2712,36 @@
         });
         rolesHtml += "</div>";
 
+        let commentsHtml = "";
+        travel.roles.forEach((role) => {
+          if (role.comments && role.comments.length > 0) {
+            commentsHtml += `
+                        <div class="detail-item mt-4">
+                            <h3>${role.name} 댓글</h3>
+                            <ul class="list-disc pl-5 text-gray-700">
+                                ${role.comments
+                                  .map(
+                                    (comment) => `
+                                    <li><strong>${getUserNameById(
+                                      comment.userId
+                                    )}</strong> (${new Date(
+                                      comment.timestamp
+                                    ).toLocaleString()}): ${comment.text}</li>
+                                `
+                                  )
+                                  .join("")}
+                            </ul>
+                        </div>
+                    `;
+          }
+          commentsHtml += `
+                    <div class="detail-item mt-2">
+                        <textarea id="commentInput-${travel.id}-${role.name}" rows="2" placeholder="${role.name}에 대한 댓글을 남겨주세요." class="w-full p-2 border rounded-lg"></textarea>
+                        <button class="btn btn-blue text-sm mt-2" onclick="addTravelRoleComment('${travel.id}', '${role.name}')">댓글 추가</button>
+                    </div>
+                `;
+        });
+
         const contentDiv = document.getElementById("content");
         contentDiv.innerHTML = `
                 <div class="section-header">
@@ -2715,6 +2781,30 @@
                                 ? role.content.replace(/\n/g, "<br>")
                                 : "아직 준비 내용이 없습니다."
                             }</p>
+                            <div class="comments-section mt-3">
+                                <h5 class="text-md font-semibold text-gray-600 mb-1">댓글:</h5>
+                                <ul class="list-none pl-0 text-sm text-gray-600">
+                                    ${role.comments
+                                      .map(
+                                        (comment) => `
+                                        <li><strong>${getUserNameById(
+                                          comment.userId
+                                        )}</strong> (${new Date(
+                                          comment.timestamp
+                                        ).toLocaleString()}): ${
+                                          comment.text
+                                        }</li>
+                                    `
+                                      )
+                                      .join("")}
+                                </ul>
+                                <textarea id="commentInput-${travel.id}-${
+                          role.name
+                        }" rows="2" placeholder="댓글을 남겨주세요." class="w-full p-2 border rounded-lg text-sm mt-2"></textarea>
+                                <button class="btn btn-outline text-sm py-1 px-3 mt-1" onclick="addTravelRoleComment('${
+                                  travel.id
+                                }', '${role.name}')">댓글 추가</button>
+                            </div>
                         </div>
                     `
                       )
@@ -2915,7 +3005,8 @@
                 name: roleName,
                 assignedTo: assignedToIds,
                 content: "",
-              });
+                comments: [],
+              }); // Initialize comments array for new roles
             }
           }
         });
@@ -2937,7 +3028,7 @@
             travel.startDate = startDate;
             travel.endDate = endDate;
             travel.memo = memo;
-            // Preserve existing content for roles if they still exist
+            // Preserve existing content and comments for roles if they still exist
             const updatedRoles = roles.map((newRole) => {
               const existingRole = travel.roles.find(
                 (oldRole) => oldRole.name === newRole.name
@@ -2945,6 +3036,7 @@
               return {
                 ...newRole,
                 content: existingRole ? existingRole.content : "", // Keep old content if role name matches
+                comments: existingRole ? existingRole.comments : [], // Keep old comments
               };
             });
             travel.roles = updatedRoles;
@@ -3039,6 +3131,41 @@
           showMessageBox("성공", "공지사항이 저장되었습니다.");
           viewTravelDetails(selectedTravelId); // Re-render details to show updated notice
         }
+      }
+
+      // --- Travel Role Comment Functions ---
+      function addTravelRoleComment(travelId, roleName) {
+        const travel = currentGroup.travels.find((t) => t.id === travelId);
+        if (!travel) {
+          showMessageBox("오류", "여행을 찾을 수 없습니다.");
+          return;
+        }
+        const role = travel.roles.find((r) => r.name === roleName);
+        if (!role) {
+          showMessageBox("오류", "역할을 찾을 수 없습니다.");
+          return;
+        }
+
+        const commentInput = document.getElementById(
+          `commentInput-${travelId}-${roleName}`
+        );
+        const commentText = commentInput.value.trim();
+
+        if (!commentText) {
+          showMessageBox("댓글 입력", "댓글 내용을 입력해주세요.");
+          return;
+        }
+
+        const newComment = {
+          userId: mockData.currentUser.id,
+          timestamp: new Date().toISOString(),
+          text: commentText,
+        };
+
+        role.comments.push(newComment);
+        commentInput.value = ""; // Clear input
+        showMessageBox("댓글 추가 완료", "댓글이 성공적으로 추가되었습니다.");
+        viewTravelDetails(travelId); // Re-render to show new comment
       }
 
       // --- Birthdays Tab Functions ---
