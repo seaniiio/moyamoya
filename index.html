@@ -1039,6 +1039,7 @@
             type="number"
             id="expenseAmount"
             placeholder="예: 20000"
+            min="1"
             required />
 
           <label for="expenseDeadline">마감일</label>
@@ -2483,7 +2484,7 @@
         div.className = "flex items-center gap-2 mb-2";
         div.innerHTML = `
                 <input type="date" id="voteOptionDate-${newIndex}" class="flex-1" value="${date}" required>
-                <input type="time" id="voteOptionTime-${newIndex}" class="flex-1" value="${time}" required>
+                <input type="time" id="voteOptionTime-${newIndex}" class="flex-1" value="${time}" step="600" required>
                 <button class="btn btn-red px-3 py-2 text-sm" onclick="this.parentNode.remove()">삭제</button>
             `;
         container.appendChild(div);
@@ -3941,6 +3942,11 @@
             "필수 정보 누락",
             "회비 항목 이름, 금액, 마감일, 입금 은행, 계좌번호, 예금주는 필수 입력 사항입니다."
           );
+          return;
+        }
+        if (amount <= 0) {
+          // Enforce positive amount
+          showMessageBox("입력 오류", "금액은 1원 이상이어야 합니다.");
           return;
         }
 
