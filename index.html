@@ -646,6 +646,8 @@
                 <textarea id="declineReason" rows="3" placeholder="불참 사유를 입력해주세요." class="hidden"></textarea>
                  <label for="pendingReason" class="hidden" id="pendingReasonLabel">보류 사유</label>
                 <textarea id="pendingReason" rows="3" placeholder="보류 사유를 입력해주세요." class="hidden"></textarea>
+                <label for="pendingExpectedDate" class="hidden" id="pendingExpectedDateLabel">예상 결정 시점</label>
+                <input type="date" id="pendingExpectedDate" class="hidden">
             </div>
             <div class="modal-footer" id="participateModalFooter">
                 <!-- Buttons will be dynamically managed -->
@@ -812,6 +814,8 @@
                 <p id="expensePendingInfo" class="text-lg mb-4 text-gray-700"></p>
                 <label for="expensePendingReason">보류 사유</label>
                 <textarea id="expensePendingReason" rows="3" placeholder="보류 사유를 입력해주세요." required></textarea>
+                <label for="expensePendingExpectedDate">예상 결정 시점</label>
+                <input type="date" id="expensePendingExpectedDate">
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="closeModal('expensePendingModal')">취소</button>
@@ -912,7 +916,7 @@
                         <li>회비 금액은 양수만 입력 가능합니다.</li>
                         <li><strong class="text-blue-600">입금 계좌</strong> 정보를 등록하고, 계좌번호 <strong class="text-blue-600">복사</strong> 버튼으로 쉽게 공유할 수 있습니다.</li>
                     </ul>
-                    미납된 회비에 대해서는 <strong class="text-orange-600">재촉</strong> 버튼을 보낼 수 있으며, 납부를 <strong class="text-orange-600">보류</strong>하고 사유를 남길 수 있습니다.
+                    미납된 회비에 대해서는 <strong class="text-orange-600">재촉</strong> 버튼을 보낼 수 있으며, 납부를 <strong class="text-orange-600">보류</strong>하고 사유와 예상 결정 시점을 남길 수 있습니다.
                 </p>
 
                 <h3 class="font-semibold text-lg mt-4 mb-2 text-gray-700">6. 멤버 목록 (👥)</h3>
@@ -1196,7 +1200,7 @@
             return user ? user.name : '알 수 없음';
         }
 
-        // Utility function to get user ID by name
+        // Utility function to to get user ID by name
         function getUserIdByName(userName) {
             const user = mockData.users.find(u => u.name === userName);
             return user ? user.id : null;
@@ -1429,7 +1433,7 @@
                 const participant = m.participants.find(p => p.userId === mockData.currentUser.id);
                 // For fixed meetings, status '미정' means unresponded
                 // For vote meetings, status 'pending_vote' means unresponded
-                return participant && (participant.status === '미정' || participant.status === 'pending_vote');
+                return participant && (participant.status === '미정' || participant.status === 'pending_vote' || participant.status === '보류'); // Include '보류' status
             });
 
             const myUnfinishedTravelRoles = currentGroup.travels.flatMap(t =>
@@ -1450,13 +1454,38 @@
                         <ul class="list-disc pl-5 text-gray-700">
                 `;
                 myUnrespondedMeetings.forEach(m => {
-                    myPendingTasksHtml += `<li>약속: <strong>${m.name}</strong> 참여 여부 결정 <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="viewMeetingDetails('${m.id}')">바로가기</button></li>`;
+                    let description = '';
+                    if (m.type === 'fixed') {
+                        description = `참여 여부 결정 (${m.date} ${m.time})`;
+                    } else if (m.type === 'vote') {
+                        description = `투표 참여 (${m.place || '장소 미정'})`;
+                    }
+                    const participant = m.participants.find(p => p.userId === mockData.currentUser.id);
+                    if (participant.status === '보류' && participant.reason) {
+                        description += ` (보류 사유: ${participant.reason}`;
+                        if (participant.expectedDecisionDate) {
+                            description += `, 예상 결정: ${participant.expectedDecisionDate}`;
+                        }
+                        description += `)`;
+                    }
+                    myPendingTasksHtml += `<li>약속: <strong>${m.name}</strong> - ${description} <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="viewMeetingDetails('${m.id}')">바로가기</button></li>`;
                 });
                 myUnfinishedTravelRoles.forEach(r => {
                     myPendingTasksHtml += `<li>여행: <strong>${r.travelName}</strong>의 <strong>${r.roleName}</strong> 업무 업데이트 <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="openTravelRoleEditModal('${r.travelId}', '${r.roleName}')">바로가기</button></li>`;
                 });
                 myUnpaidExpenses.forEach(e => {
-                    myPendingTasksHtml += `<li>회비: <strong>${e.name}</strong> ${e.amount.toLocaleString()}원 납부 <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="viewExpenseDetails('${e.id}')">바로가기</button></li>`;
+                    let description = `${e.amount.toLocaleString()}원 납부`;
+                    const payer = e.payers.find(p => p.userId === mockData.currentUser.id);
+                    if (payer.status === 'pending') {
+                        description += ` (보류 중: ${payer.reason}`;
+                        if (payer.expectedDecisionDate) {
+                            description += `, 예상 결정: ${payer.expectedDecisionDate}`;
+                        }
+                        description += `)`;
+                    } else {
+                        description += ` (미납)`;
+                    }
+                    myPendingTasksHtml += `<li>회비: <strong>${e.name}</strong> - ${description} <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="viewExpenseDetails('${e.id}')">바로가기</button></li>`;
                 });
                 myPendingTasksHtml += `
                         </ul>
@@ -1688,6 +1717,7 @@
                     const participant = meeting.participants.find(p => p.userId === memberId);
                     const status = participant ? participant.status : '미정';
                     const reason = (participant && (status === '불참' || status === '보류')) ? ` (사유: ${participant.reason})` : ''; // Show reason for '불참' or '보류'
+                    const expectedDate = (participant && status === '보류' && participant.expectedDecisionDate) ? ` (예상 결정: ${participant.expectedDecisionDate})` : ''; // New
                     const statusClass = { '가능': 'possible', '불참': 'impossible', '미정': 'pending', '보류': 'on-hold' }[status]; // Added '보류'
                     const nagKey = `nag-meeting-${meetingId}-${memberId}`;
                     const canNag = !lastNagTimes[nagKey] || (Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION);
@@ -1696,7 +1726,7 @@
                         (status === '미정' && !canNag) ?
                         `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>` : '';
 
-                    participantsHtml += `<li><strong>${getUserNameById(memberId)}</strong>: <span class="status-badge ${statusClass}">${status}</span>${reason}${nagButtonHtml}</li>`;
+                    participantsHtml += `<li><strong>${getUserNameById(memberId)}</strong>: <span class="status-badge ${statusClass}">${status}</span>${reason}${expectedDate}${nagButtonHtml}</li>`;
                 });
                 participantsHtml += '</ul>';
 
@@ -1882,7 +1912,8 @@
                     participants: currentGroup.members.map(userId => ({
                         userId: userId,
                         status: userId === mockData.currentUser.id ? '가능' : '미정',
-                        reason: ''
+                        reason: '',
+                        expectedDecisionDate: '' // Initialize for new fixed meeting
                     }))
                 };
             } else if (type === 'vote') {
@@ -1930,7 +1961,8 @@
                     participants: currentGroup.members.map(userId => ({ // Participants tracked for overall meeting
                         userId: userId,
                         status: 'pending_vote', // New status for voting meetings
-                        reason: ''
+                        reason: '',
+                        expectedDecisionDate: '' // Initialize for new vote meeting
                     }))
                 };
             }
@@ -1984,6 +2016,8 @@
             const declineReasonTextarea = document.getElementById('declineReason');
             const pendingReasonLabel = document.getElementById('pendingReasonLabel'); // New
             const pendingReasonTextarea = document.getElementById('pendingReason'); // New
+            const pendingExpectedDateLabel = document.getElementById('pendingExpectedDateLabel'); // New
+            const pendingExpectedDateInput = document.getElementById('pendingExpectedDate'); // New
             const declineButton = document.getElementById('declineButton');
             const participateButton = document.getElementById('participateButton');
             const pendingButton = document.getElementById('pendingButton'); // New
@@ -1992,8 +2026,8 @@
             const cancelDeclineButton = document.getElementById('cancelDeclineButton');
 
             if (!participateModalTitle || !participateMeetingName || !declineReasonLabel || !declineReasonTextarea ||
-                !pendingReasonLabel || !pendingReasonTextarea || !declineButton || !participateButton ||
-                !pendingButton || !confirmDeclineButton || !confirmPendingButton || !cancelDeclineButton) {
+                !pendingReasonLabel || !pendingReasonTextarea || !pendingExpectedDateLabel || !pendingExpectedDateInput || // New
+                !declineButton || !participateButton || !pendingButton || !confirmDeclineButton || !confirmPendingButton || !cancelDeclineButton) {
                 showMessageBox('오류', '모달 요소를 찾을 수 없습니다. 페이지를 새로고침 해주세요.');
                 return;
             }
@@ -2008,6 +2042,9 @@
             pendingReasonLabel.classList.add('hidden'); // New
             pendingReasonTextarea.classList.add('hidden'); // New
             pendingReasonTextarea.value = ''; // New
+            pendingExpectedDateLabel.classList.add('hidden'); // New
+            pendingExpectedDateInput.classList.add('hidden'); // New
+            pendingExpectedDateInput.value = ''; // New
 
             declineButton.classList.remove('hidden');
             participateButton.classList.remove('hidden');
@@ -2025,6 +2062,8 @@
             const declineReasonTextarea = document.getElementById('declineReason');
             const pendingReasonLabel = document.getElementById('pendingReasonLabel'); // New
             const pendingReasonTextarea = document.getElementById('pendingReason'); // New
+            const pendingExpectedDateLabel = document.getElementById('pendingExpectedDateLabel'); // New
+            const pendingExpectedDateInput = document.getElementById('pendingExpectedDate'); // New
             const declineButton = document.getElementById('declineButton');
             const participateButton = document.getElementById('participateButton');
             const pendingButton = document.getElementById('pendingButton'); // New
@@ -2036,6 +2075,8 @@
             declineReasonTextarea.classList.remove('hidden');
             pendingReasonLabel.classList.add('hidden'); // Hide pending reason
             pendingReasonTextarea.classList.add('hidden'); // Hide pending reason
+            pendingExpectedDateLabel.classList.add('hidden'); // Hide expected date
+            pendingExpectedDateInput.classList.add('hidden'); // Hide expected date
 
             declineButton.classList.add('hidden');
             participateButton.classList.add('hidden');
@@ -2051,6 +2092,8 @@
             const declineReasonTextarea = document.getElementById('declineReason');
             const pendingReasonLabel = document.getElementById('pendingReasonLabel');
             const pendingReasonTextarea = document.getElementById('pendingReason');
+            const pendingExpectedDateLabel = document.getElementById('pendingExpectedDateLabel'); // New
+            const pendingExpectedDateInput = document.getElementById('pendingExpectedDate'); // New
             const declineButton = document.getElementById('declineButton');
             const participateButton = document.getElementById('participateButton');
             const pendingButton = document.getElementById('pendingButton');
@@ -2062,6 +2105,8 @@
             declineReasonTextarea.classList.add('hidden'); // Hide decline reason
             pendingReasonLabel.classList.remove('hidden');
             pendingReasonTextarea.classList.remove('hidden');
+            pendingExpectedDateLabel.classList.remove('hidden'); // Show expected date
+            pendingExpectedDateInput.classList.remove('hidden'); // Show expected date
 
             declineButton.classList.add('hidden');
             participateButton.classList.add('hidden');
@@ -2077,6 +2122,8 @@
             const declineReasonTextarea = document.getElementById('declineReason');
             const pendingReasonLabel = document.getElementById('pendingReasonLabel');
             const pendingReasonTextarea = document.getElementById('pendingReason');
+            const pendingExpectedDateLabel = document.getElementById('pendingExpectedDateLabel'); // New
+            const pendingExpectedDateInput = document.getElementById('pendingExpectedDate'); // New
             const declineButton = document.getElementById('declineButton');
             const participateButton = document.getElementById('participateButton');
             const pendingButton = document.getElementById('pendingButton');
@@ -2090,6 +2137,9 @@
             pendingReasonLabel.classList.add('hidden');
             pendingReasonTextarea.classList.add('hidden');
             pendingReasonTextarea.value = ''; // Clear input
+            pendingExpectedDateLabel.classList.add('hidden'); // New
+            pendingExpectedDateInput.classList.add('hidden'); // New
+            pendingExpectedDateInput.value = ''; // New
 
             declineButton.classList.remove('hidden');
             participateButton.classList.remove('hidden');
@@ -2108,7 +2158,7 @@
             let currentUserParticipation = meeting.participants.find(p => p.userId === mockData.currentUser.id);
 
             if (!currentUserParticipation) {
-                currentUserParticipation = { userId: mockData.currentUser.id, status: '미정', reason: '' };
+                currentUserParticipation = { userId: mockData.currentUser.id, status: '미정', reason: '', expectedDecisionDate: '' }; // Added expectedDecisionDate
                 meeting.participants.push(currentUserParticipation);
             }
 
@@ -2120,16 +2170,20 @@
                     return;
                 }
                 currentUserParticipation.reason = reason;
+                currentUserParticipation.expectedDecisionDate = ''; // Clear expected date if not pending
             } else if (status === '보류') { // Handle '보류' status
                 const reason = document.getElementById('pendingReason').value;
+                const expectedDate = document.getElementById('pendingExpectedDate').value; // Get expected date
                 if (!reason) {
                     showMessageBox('필수 입력', '보류 사유를 입력해주세요.');
                     return;
                 }
                 currentUserParticipation.reason = reason;
+                currentUserParticipation.expectedDecisionDate = expectedDate; // Save expected date
             }
             else {
                 currentUserParticipation.reason = '';
+                currentUserParticipation.expectedDecisionDate = ''; // Clear expected date if not pending
             }
 
             closeModal('meetingParticipateModal');
@@ -2368,7 +2422,7 @@
                 </select>
                 <button class="btn btn-red px-3 py-2 text-sm" onclick="this.parentNode.remove()">삭제</button>
             `;
-            container.appendChild(roleDiv);
+            container.appendChild(div);
         }
 
         // Function to handle random assignment
@@ -2873,7 +2927,7 @@
                     `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagPayer('${expense.id}', '${memberId}')">🛎️ 재촉</button>` :
                     (payer && payer.status !== 'paid' && !canNag) ?
                     `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>` : '';
-                payersHtml += `<li><strong>${getUserNameById(memberId)}</strong>: <span class="status-badge ${statusClass}">${statusText}</span>${payer && payer.status === 'pending' ? ` (사유: ${payer.reason})` : ''}${nagButtonHtml}</li>`; // Used statusText and reason
+                payersHtml += `<li><strong>${getUserNameById(memberId)}</strong>: <span class="status-badge ${statusClass}">${statusText}</span>${payer && payer.status === 'pending' ? ` (사유: ${payer.reason})` : ''}${payer && payer.status === 'pending' && payer.expectedDecisionDate ? ` (예상 결정: ${payer.expectedDecisionDate})` : ''}${nagButtonHtml}</li>`; // Used statusText and reason
             });
             payersHtml += '</ul>';
 
@@ -2947,7 +3001,8 @@
                     userId: userId,
                     paid: false,
                     status: 'unpaid', // Default status for new expense
-                    reason: ''
+                    reason: '',
+                    expectedDecisionDate: '' // Initialize for new expense
                 }))
             };
 
@@ -2966,12 +3021,13 @@
             if (expense) {
                 let payer = expense.payers.find(p => p.userId === mockData.currentUser.id);
                 if (!payer) {
-                    payer = { userId: mockData.currentUser.id, paid: false, status: 'unpaid', reason: '' };
+                    payer = { userId: mockData.currentUser.id, paid: false, status: 'unpaid', reason: '', expectedDecisionDate: '' };
                     expense.payers.push(payer);
                 }
                 payer.paid = true;
                 payer.status = 'paid';
                 payer.reason = '';
+                payer.expectedDecisionDate = '';
                 showMessageBox('성공', '회비 제출이 완료되었습니다.');
                 renderExpenses(); // Re-render to reflect changes
             }
@@ -2987,7 +3043,9 @@
                 return;
             }
             document.getElementById('expensePendingInfo').textContent = `'${expense.name}' 납부를 보류하시겠습니까?`;
-            document.getElementById('expensePendingReason').value = expense.payers.find(p => p.userId === mockData.currentUser.id)?.reason || '';
+            const currentUserPayer = expense.payers.find(p => p.userId === mockData.currentUser.id);
+            document.getElementById('expensePendingReason').value = currentUserPayer?.reason || '';
+            document.getElementById('expensePendingExpectedDate').value = currentUserPayer?.expectedDecisionDate || '';
             openModal('expensePendingModal');
         }
 
@@ -2998,6 +3056,7 @@
             if (!expense) return;
 
             const pendingReason = document.getElementById('expensePendingReason').value;
+            const expectedDecisionDate = document.getElementById('expensePendingExpectedDate').value;
             if (!pendingReason) {
                 showMessageBox('필수 입력', '보류 사유를 입력해주세요.');
                 return;
@@ -3005,11 +3064,12 @@
 
             let payer = expense.payers.find(p => p.userId === mockData.currentUser.id);
             if (!payer) {
-                payer = { userId: mockData.currentUser.id, paid: false, status: 'unpaid', reason: '' };
+                payer = { userId: mockData.currentUser.id, paid: false, status: 'unpaid', reason: '', expectedDecisionDate: '' };
                 expense.payers.push(payer);
             }
             payer.status = 'pending';
             payer.reason = pendingReason;
+            payer.expectedDecisionDate = expectedDecisionDate;
 
             closeModal('expensePendingModal');
             showMessageBox('성공', `회비 납부가 '보류' 상태로 업데이트되었습니다.`);
@@ -3343,12 +3403,25 @@
                 // Check for unresponded meetings
                 group.meetings.forEach(m => {
                     const participant = m.participants.find(p => p.userId === mockData.currentUser.id);
-                    if (participant && (participant.status === '미정' || participant.status === 'pending_vote')) {
+                    if (participant && (participant.status === '미정' || participant.status === 'pending_vote' || participant.status === '보류')) { // Include '보류' status
+                        let description = '';
+                        if (m.type === 'fixed') {
+                            description = `참여 여부 결정 (${m.date} ${m.time})`;
+                        } else if (m.type === 'vote') {
+                            description = `투표 참여 (${m.place || '장소 미정'})`;
+                        }
+                        if (participant.status === '보류' && participant.reason) {
+                            description += ` (보류 사유: ${participant.reason}`;
+                            if (participant.expectedDecisionDate) {
+                                description += `, 예상 결정: ${participant.expectedDecisionDate}`;
+                            }
+                            description += `)`;
+                        }
                         pendingTasks.push({
                             groupName: group.name,
                             type: '약속',
                             name: m.name,
-                            description: m.type === 'fixed' ? `참여 여부 결정 (${m.date} ${m.time})` : `투표 참여 (${m.place || ''})`,
+                            description: description,
                             action: `viewMeetingDetails('${m.id}')`
                         });
                     }
@@ -3373,11 +3446,21 @@
                 group.expenses.forEach(e => {
                     const payer = e.payers.find(p => p.userId === mockData.currentUser.id);
                     if (payer && (payer.status === 'unpaid' || payer.status === 'pending')) {
+                        let description = `${e.amount.toLocaleString()}원 납부`;
+                        if (payer.status === 'pending') {
+                            description += ` (보류 중: ${payer.reason}`;
+                            if (payer.expectedDecisionDate) {
+                                description += `, 예상 결정: ${payer.expectedDecisionDate}`;
+                            }
+                            description += `)`;
+                        } else {
+                            description += ` (미납)`;
+                        }
                         pendingTasks.push({
                             groupName: group.name,
                             type: '회비',
                             name: e.name,
-                            description: `${e.amount.toLocaleString()}원 납부 (${payer.status === 'pending' ? '보류 중' : '미납'})`,
+                            description: description,
                             action: `viewExpenseDetails('${e.id}')`
                         });
                     }
