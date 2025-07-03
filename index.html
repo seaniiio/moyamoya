@@ -1146,6 +1146,32 @@
       </div>
     </div>
 
+    <!-- My Pending Tasks Consolidated Modal -->
+    <div id="myPendingTasksModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">내 할 일 모아보기</h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('myPendingTasksModal')">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="myPendingTasksList">
+            <!-- Consolidated tasks will be loaded here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-primary"
+            onclick="closeModal('myPendingTasksModal')">
+            닫기
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Message Box Modal (for alerts) -->
     <div id="messageBoxModal" class="modal-overlay">
       <div class="modal-content">
@@ -1674,6 +1700,7 @@
                         <!-- Group cards will be rendered here -->
                     </div>
                     <button class="btn btn-blue mt-6 w-full" onclick="openModal('groupCreateModal')">새 모임 생성</button>
+                    <button class="btn btn-outline mt-2 w-full" onclick="openMyPendingTasksConsolidatedModal()">내 할 일 확인하기</button>
                 </div>
             `;
 
@@ -4441,6 +4468,101 @@
         closeModal("leaveGroupConfirmModal");
         renderGroupList(); // Go back to group list
         leaveGroupId = null; // Reset
+      }
+
+      // --- My Pending Tasks Consolidated Modal Functions ---
+      function openMyPendingTasksConsolidatedModal() {
+        const pendingTasks = [];
+
+        // Iterate through all groups the current user is a member of
+        mockData.groups.forEach((group) => {
+          if (!group.members.includes(mockData.currentUser.id)) {
+            return; // Skip groups the user is not a member of
+          }
+
+          // Check for unresponded meetings
+          group.meetings.forEach((m) => {
+            const participant = m.participants.find(
+              (p) => p.userId === mockData.currentUser.id
+            );
+            if (
+              participant &&
+              (participant.status === "미정" ||
+                participant.status === "pending_vote")
+            ) {
+              pendingTasks.push({
+                groupName: group.name,
+                type: "약속",
+                name: m.name,
+                description:
+                  m.type === "fixed"
+                    ? `참여 여부 결정 (${m.date} ${m.time})`
+                    : `투표 참여 (${m.place || ""})`,
+                action: `viewMeetingDetails('${m.id}')`,
+              });
+            }
+          });
+
+          // Check for unfinished travel roles
+          group.travels.forEach((t) => {
+            t.roles.forEach((r) => {
+              if (
+                r.assignedTo.includes(mockData.currentUser.id) &&
+                r.content === ""
+              ) {
+                pendingTasks.push({
+                  groupName: group.name,
+                  type: "여행 역할",
+                  name: `${t.name} - ${r.name}`,
+                  description: `업무 현황 업데이트`,
+                  action: `openTravelRoleEditModal('${t.id}', '${r.name}')`,
+                });
+              }
+            });
+          });
+
+          // Check for unpaid expenses
+          group.expenses.forEach((e) => {
+            const payer = e.payers.find(
+              (p) => p.userId === mockData.currentUser.id
+            );
+            if (
+              payer &&
+              (payer.status === "unpaid" || payer.status === "pending")
+            ) {
+              pendingTasks.push({
+                groupName: group.name,
+                type: "회비",
+                name: e.name,
+                description: `${e.amount.toLocaleString()}원 납부 (${
+                  payer.status === "pending" ? "보류 중" : "미납"
+                })`,
+                action: `viewExpenseDetails('${e.id}')`,
+              });
+            }
+          });
+        });
+
+        const myPendingTasksListDiv =
+          document.getElementById("myPendingTasksList");
+        if (pendingTasks.length === 0) {
+          myPendingTasksListDiv.innerHTML =
+            '<p class="text-gray-600">현재 모든 모임에서 처리할 일이 없습니다! ✨</p>';
+        } else {
+          let tasksHtml = '<ul class="list-disc pl-5 text-gray-700">';
+          pendingTasks.forEach((task) => {
+            tasksHtml += `
+                        <li class="mb-2">
+                            <strong>[${task.groupName}] ${task.type}:</strong> ${task.name} - ${task.description}
+                            <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="${task.action}">바로가기</button>
+                        </li>
+                    `;
+          });
+          tasksHtml += "</ul>";
+          myPendingTasksListDiv.innerHTML = tasksHtml;
+        }
+
+        openModal("myPendingTasksModal");
       }
 
       // --- Initial Load ---
