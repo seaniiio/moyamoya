@@ -1025,6 +1025,27 @@
             type="text"
             id="expensePenalty"
             placeholder="예: 미납 시 다음 약속 커피 사기" />
+
+          <label for="expenseBankName">입금 은행</label>
+          <input
+            type="text"
+            id="expenseBankName"
+            placeholder="예: 카카오뱅크"
+            required />
+
+          <label for="expenseBankAccount">입금 계좌번호</label>
+          <input
+            type="text"
+            id="expenseBankAccount"
+            placeholder="예: 3333-01-1234567"
+            required />
+
+          <label for="expenseBankAccountHolder">예금주</label>
+          <input
+            type="text"
+            id="expenseBankAccountHolder"
+            placeholder="예: 홍길동"
+            required />
         </div>
         <div class="modal-footer">
           <button
@@ -1295,6 +1316,9 @@
                 amount: 20000,
                 deadline: "2025-07-31",
                 penalty: "다음 약속 커피 사기",
+                bankName: "카카오뱅크", // Added bank info
+                bankAccount: "3333-01-1234567", // Added bank info
+                bankAccountHolder: "김수린", // Added bank info
                 payers: [
                   { userId: "user-soorin", paid: true },
                   { userId: "user-boryeong", paid: true },
@@ -1420,11 +1444,15 @@
                 amount: 20000,
                 deadline: "2025-07-20",
                 penalty: "릴스 찍어서 크루위키에 올리기",
+                bankName: "우리은행", // Added bank info
+                bankAccount: "1002-345-678901", // Added bank info
+                bankAccountHolder: "김메이", // Added bank info
                 payers: [
                   { userId: "user-hangseong-i", paid: true },
                   { userId: "user-may", paid: true },
                   { userId: "user-minggom", paid: true },
                   { userId: "user-pora", paid: true },
+                  { userId: "user-meonggu", paid: true },
                   { userId: "user-lisa", paid: true },
                   { userId: "user-dompu", paid: true },
                   { userId: "user-jensen", paid: true },
@@ -2718,7 +2746,7 @@
             commentsHtml += `
                         <div class="detail-item mt-4">
                             <h3>${role.name} 댓글</h3>
-                            <ul class="list-disc pl-5 text-gray-700">
+                            <ul class="list-none pl-0 text-sm text-gray-600">
                                 ${role.comments
                                   .map(
                                     (comment) => `
@@ -2736,8 +2764,8 @@
           }
           commentsHtml += `
                     <div class="detail-item mt-2">
-                        <textarea id="commentInput-${travel.id}-${role.name}" rows="2" placeholder="${role.name}에 대한 댓글을 남겨주세요." class="w-full p-2 border rounded-lg"></textarea>
-                        <button class="btn btn-blue text-sm mt-2" onclick="addTravelRoleComment('${travel.id}', '${role.name}')">댓글 추가</button>
+                        <textarea id="commentInput-${travel.id}-${role.name}" rows="2" placeholder="댓글을 남겨주세요." class="w-full p-2 border rounded-lg text-sm mt-2"></textarea>
+                        <button class="btn btn-outline text-sm py-1 px-3 mt-1" onclick="addTravelRoleComment('${travel.id}', '${role.name}')">댓글 추가</button>
                     </div>
                 `;
         });
@@ -3501,27 +3529,6 @@
 
           const expenseCard = document.createElement("div");
           expenseCard.className = "card";
-          let payersHtml = "";
-          currentGroup.members.forEach((memberId) => {
-            const payer = expense.payers.find((p) => p.userId === memberId);
-            const pPaidStatus = payer ? payer.paid : false;
-            const pStatusText = pPaidStatus ? "제출 완료" : "미제출";
-            const pStatusClass = pPaidStatus ? "paid" : "unpaid";
-            const nagKey = `nag-expense-${expense.id}-${memberId}`;
-            const canNag =
-              !lastNagTimes[nagKey] ||
-              Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
-            const nagButtonHtml =
-              !pPaidStatus && canNag
-                ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagPayer('${expense.id}', '${memberId}')">🛎️ 재촉</button>`
-                : !pPaidStatus && !canNag
-                ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>`
-                : "";
-            payersHtml += `<li><strong>${getUserNameById(
-              memberId
-            )}</strong>: <span class="status-badge ${pStatusClass}">${pStatusText}</span>${nagButtonHtml}</li>`;
-          });
-
           expenseCard.innerHTML = `
                     <div class="card-title">${expense.name}</div>
                     <div class="card-subtitle">금액: ${expense.amount.toLocaleString()}원 | 마감일: ${
@@ -3581,6 +3588,25 @@
           ? `<button class="btn btn-green" onclick="markExpensePaid('${expense.id}')">제출 완료</button>`
           : "";
 
+        const bankInfoHtml = expense.bankAccount
+          ? `
+                <div class="detail-item mt-4">
+                    <h3>입금 정보</h3>
+                    <p><strong>은행:</strong> ${
+                      expense.bankName || "정보 없음"
+                    }</p>
+                    <p><strong>계좌번호:</strong> ${
+                      expense.bankAccount
+                    } <button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="copyToClipboard('${
+              expense.bankAccount
+            }', '계좌번호')">복사</button></p>
+                    <p><strong>예금주:</strong> ${
+                      expense.bankAccountHolder || "정보 없음"
+                    }</p>
+                </div>
+            `
+          : "";
+
         const contentDiv = document.getElementById("content");
         contentDiv.innerHTML = `
                 <div class="section-header">
@@ -3593,6 +3619,7 @@
                     <p><strong>마감일:</strong> ${expense.deadline}</p>
                     <p><strong>벌칙:</strong> ${expense.penalty || "없음"}</p>
                 </div>
+                ${bankInfoHtml}
                 <div class="detail-item">
                     <h3>제출 현황</h3>
                     ${payersHtml}
@@ -3611,11 +3638,23 @@
         const amount = parseInt(document.getElementById("expenseAmount").value);
         const deadline = document.getElementById("expenseDeadline").value;
         const penalty = document.getElementById("expensePenalty").value;
+        const bankName = document.getElementById("expenseBankName").value; // Get bank name
+        const bankAccount = document.getElementById("expenseBankAccount").value; // Get bank account
+        const bankAccountHolder = document.getElementById(
+          "expenseBankAccountHolder"
+        ).value; // Get account holder
 
-        if (!name || isNaN(amount) || !deadline) {
+        if (
+          !name ||
+          isNaN(amount) ||
+          !deadline ||
+          !bankName ||
+          !bankAccount ||
+          !bankAccountHolder
+        ) {
           showMessageBox(
             "필수 정보 누락",
-            "회비 항목 이름, 금액, 마감일은 필수 입력 사항입니다."
+            "회비 항목 이름, 금액, 마감일, 입금 은행, 계좌번호, 예금주는 필수 입력 사항입니다."
           );
           return;
         }
@@ -3626,6 +3665,9 @@
           amount,
           deadline,
           penalty,
+          bankName, // Add to expense object
+          bankAccount, // Add to expense object
+          bankAccountHolder, // Add to expense object
           payers: currentGroup.members.map((userId) => ({
             userId: userId,
             paid: false,
@@ -3929,6 +3971,9 @@
               }\n금액: ${e.amount.toLocaleString()}원\n마감일: ${
                 e.deadline
               }\n벌칙: ${e.penalty || "없음"}`;
+              if (item.bankAccount) {
+                linkText += `\n입금 은행: ${item.bankName}\n계좌번호: ${item.bankAccount}\n예금주: ${item.bankAccountHolder}`;
+              }
             }
             break;
           default:
@@ -3955,6 +4000,23 @@
           showMessageBox(
             "복사 실패",
             "클립보드 복사에 실패했습니다. 수동으로 복사해주세요."
+          );
+        }
+        document.body.removeChild(textarea);
+      }
+
+      function copyToClipboard(text, type) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand("copy");
+          showMessageBox("복사 완료", `${type}가 클립보드에 복사되었습니다!`);
+        } catch (err) {
+          showMessageBox(
+            "복사 실패",
+            `클립보드 복사에 실패했습니다. 수동으로 복사해주세요.`
           );
         }
         document.body.removeChild(textarea);
