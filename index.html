@@ -423,6 +423,10 @@
         background-color: #e0e0ff;
         color: #673ab7;
       } /* New color for voted status */
+      .status-badge.on-hold {
+        background-color: #ffe0b2;
+        color: #ff9800;
+      } /* New color for on-hold status */
       .status-badge.paid {
         background-color: #e6ffe6;
         color: #34a853;
@@ -774,6 +778,14 @@
             rows="3"
             placeholder="불참 사유를 입력해주세요."
             class="hidden"></textarea>
+          <label for="pendingReason" class="hidden" id="pendingReasonLabel"
+            >보류 사유</label
+          >
+          <textarea
+            id="pendingReason"
+            rows="3"
+            placeholder="보류 사유를 입력해주세요."
+            class="hidden"></textarea>
         </div>
         <div class="modal-footer" id="participateModalFooter">
           <!-- Buttons will be dynamically managed -->
@@ -790,15 +802,27 @@
             참여
           </button>
           <button
+            class="btn-primary"
+            id="pendingButton"
+            onclick="showPendingReasonInput()">
+            보류
+          </button>
+          <button
             class="btn-primary hidden"
             id="confirmDeclineButton"
             onclick="handleMeetingParticipation('불참')">
             확인
           </button>
           <button
+            class="btn-primary hidden"
+            id="confirmPendingButton"
+            onclick="handleMeetingParticipation('보류')">
+            확인
+          </button>
+          <button
             class="btn-secondary hidden"
             id="cancelDeclineButton"
-            onclick="hideDeclineReasonInput()">
+            onclick="hideReasonInputs()">
             취소
           </button>
         </div>
@@ -1054,6 +1078,39 @@
             취소
           </button>
           <button class="btn-primary" onclick="createExpense()">저장</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expense Pending Modal -->
+    <div id="expensePendingModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">회비 납부 보류 사유</h2>
+          <button
+            class="modal-close-button"
+            onclick="closeModal('expensePendingModal')">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <p id="expensePendingInfo" class="text-lg mb-4 text-gray-700"></p>
+          <label for="expensePendingReason">보류 사유</label>
+          <textarea
+            id="expensePendingReason"
+            rows="3"
+            placeholder="보류 사유를 입력해주세요."
+            required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-secondary"
+            onclick="closeModal('expensePendingModal')">
+            취소
+          </button>
+          <button class="btn-primary" onclick="handleExpensePending()">
+            확인
+          </button>
         </div>
       </div>
     </div>
@@ -1320,9 +1377,24 @@
                 bankAccount: "3333-01-1234567", // Added bank info
                 bankAccountHolder: "김수린", // Added bank info
                 payers: [
-                  { userId: "user-soorin", paid: true },
-                  { userId: "user-boryeong", paid: true },
-                  { userId: "user-hangseong-i", paid: false }, // Current user initial status
+                  {
+                    userId: "user-soorin",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-boryeong",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-hangseong-i",
+                    paid: false,
+                    status: "unpaid",
+                    reason: "",
+                  }, // Current user initial status
                 ],
               },
             ],
@@ -1448,18 +1520,78 @@
                 bankAccount: "1002-345-678901", // Added bank info
                 bankAccountHolder: "김메이", // Added bank info
                 payers: [
-                  { userId: "user-hangseong-i", paid: true },
-                  { userId: "user-may", paid: true },
-                  { userId: "user-minggom", paid: true },
-                  { userId: "user-pora", paid: true },
-                  { userId: "user-meonggu", paid: true },
-                  { userId: "user-lisa", paid: true },
-                  { userId: "user-dompu", paid: true },
-                  { userId: "user-jensen", paid: true },
-                  { userId: "user-popo", paid: true },
-                  { userId: "user-jjanggu", paid: true },
-                  { userId: "user-gaion", paid: true },
-                  { userId: "user-flint", paid: false }, // 플린트 빼고 모두 제출
+                  {
+                    userId: "user-hangseong-i",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-may",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-minggom",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-pora",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-meonggu",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-lisa",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-dompu",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-jensen",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-popo",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-jjanggu",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-gaion",
+                    paid: true,
+                    status: "paid",
+                    reason: "",
+                  },
+                  {
+                    userId: "user-flint",
+                    paid: false,
+                    status: "unpaid",
+                    reason: "",
+                  }, // 플린트 빼고 모두 제출
                 ],
               },
             ],
@@ -1767,7 +1899,9 @@
           const payer = e.payers.find(
             (p) => p.userId === mockData.currentUser.id
           );
-          return payer && !payer.paid; // Corrected: use payer.paid
+          return (
+            payer && (payer.status === "unpaid" || payer.status === "pending")
+          ); // Show unpaid or pending expenses
         });
 
         if (
@@ -2073,7 +2207,8 @@
             미정: "pending",
             pending_vote: "pending",
             voted: "voted",
-          }[statusText];
+            보류: "on-hold",
+          }[statusText]; // Added '보류'
 
           const meetingCard = document.createElement("div");
           meetingCard.className = "card";
@@ -2130,14 +2265,15 @@
             );
             const status = participant ? participant.status : "미정";
             const reason =
-              participant && status === "불참"
+              participant && (status === "불참" || status === "보류")
                 ? ` (사유: ${participant.reason})`
-                : ""; // Only show reason for '불참'
+                : ""; // Show reason for '불참' or '보류'
             const statusClass = {
               가능: "possible",
               불참: "impossible",
               미정: "pending",
-            }[status];
+              보류: "on-hold",
+            }[status]; // Added '보류'
             const nagKey = `nag-meeting-${meetingId}-${memberId}`;
             const canNag =
               !lastNagTimes[nagKey] ||
@@ -2484,11 +2620,18 @@
         const declineReasonLabel =
           document.getElementById("declineReasonLabel");
         const declineReasonTextarea = document.getElementById("declineReason");
+        const pendingReasonLabel =
+          document.getElementById("pendingReasonLabel"); // New
+        const pendingReasonTextarea = document.getElementById("pendingReason"); // New
         const declineButton = document.getElementById("declineButton");
         const participateButton = document.getElementById("participateButton");
+        const pendingButton = document.getElementById("pendingButton"); // New
         const confirmDeclineButton = document.getElementById(
           "confirmDeclineButton"
         );
+        const confirmPendingButton = document.getElementById(
+          "confirmPendingButton"
+        ); // New
         const cancelDeclineButton = document.getElementById(
           "cancelDeclineButton"
         );
@@ -2498,9 +2641,13 @@
           !participateMeetingName ||
           !declineReasonLabel ||
           !declineReasonTextarea ||
+          !pendingReasonLabel ||
+          !pendingReasonTextarea ||
           !declineButton ||
           !participateButton ||
+          !pendingButton ||
           !confirmDeclineButton ||
+          !confirmPendingButton ||
           !cancelDeclineButton
         ) {
           showMessageBox(
@@ -2517,10 +2664,15 @@
         declineReasonLabel.classList.add("hidden");
         declineReasonTextarea.classList.add("hidden");
         declineReasonTextarea.value = "";
+        pendingReasonLabel.classList.add("hidden"); // New
+        pendingReasonTextarea.classList.add("hidden"); // New
+        pendingReasonTextarea.value = ""; // New
 
         declineButton.classList.remove("hidden");
         participateButton.classList.remove("hidden");
+        pendingButton.classList.remove("hidden"); // New
         confirmDeclineButton.classList.add("hidden");
+        confirmPendingButton.classList.add("hidden"); // New
         cancelDeclineButton.classList.add("hidden");
 
         openModal("meetingParticipateModal");
@@ -2531,33 +2683,85 @@
         const declineReasonLabel =
           document.getElementById("declineReasonLabel");
         const declineReasonTextarea = document.getElementById("declineReason");
+        const pendingReasonLabel =
+          document.getElementById("pendingReasonLabel"); // New
+        const pendingReasonTextarea = document.getElementById("pendingReason"); // New
         const declineButton = document.getElementById("declineButton");
         const participateButton = document.getElementById("participateButton");
+        const pendingButton = document.getElementById("pendingButton"); // New
         const confirmDeclineButton = document.getElementById(
           "confirmDeclineButton"
         );
+        const confirmPendingButton = document.getElementById(
+          "confirmPendingButton"
+        ); // New
         const cancelDeclineButton = document.getElementById(
           "cancelDeclineButton"
         );
 
         declineReasonLabel.classList.remove("hidden");
         declineReasonTextarea.classList.remove("hidden");
+        pendingReasonLabel.classList.add("hidden"); // Hide pending reason
+        pendingReasonTextarea.classList.add("hidden"); // Hide pending reason
 
         declineButton.classList.add("hidden");
         participateButton.classList.add("hidden");
+        pendingButton.classList.add("hidden"); // Hide pending button
         confirmDeclineButton.classList.remove("hidden");
+        confirmPendingButton.classList.add("hidden"); // Hide confirm pending
         cancelDeclineButton.classList.remove("hidden");
       }
 
-      // New function to hide decline reason input (if user cancels)
-      function hideDeclineReasonInput() {
+      // New function to show pending reason input
+      function showPendingReasonInput() {
         const declineReasonLabel =
           document.getElementById("declineReasonLabel");
         const declineReasonTextarea = document.getElementById("declineReason");
+        const pendingReasonLabel =
+          document.getElementById("pendingReasonLabel");
+        const pendingReasonTextarea = document.getElementById("pendingReason");
         const declineButton = document.getElementById("declineButton");
         const participateButton = document.getElementById("participateButton");
+        const pendingButton = document.getElementById("pendingButton");
         const confirmDeclineButton = document.getElementById(
           "confirmDeclineButton"
+        );
+        const confirmPendingButton = document.getElementById(
+          "confirmPendingButton"
+        );
+        const cancelDeclineButton = document.getElementById(
+          "cancelDeclineButton"
+        );
+
+        declineReasonLabel.classList.add("hidden"); // Hide decline reason
+        declineReasonTextarea.classList.add("hidden"); // Hide decline reason
+        pendingReasonLabel.classList.remove("hidden");
+        pendingReasonTextarea.classList.remove("hidden");
+
+        declineButton.classList.add("hidden");
+        participateButton.classList.add("hidden");
+        pendingButton.classList.add("hidden");
+        confirmDeclineButton.classList.add("hidden"); // Hide confirm decline
+        confirmPendingButton.classList.remove("hidden");
+        cancelDeclineButton.classList.remove("hidden");
+      }
+
+      // Modified to hide all reason inputs
+      function hideReasonInputs() {
+        const declineReasonLabel =
+          document.getElementById("declineReasonLabel");
+        const declineReasonTextarea = document.getElementById("declineReason");
+        const pendingReasonLabel =
+          document.getElementById("pendingReasonLabel");
+        const pendingReasonTextarea = document.getElementById("pendingReason");
+        const declineButton = document.getElementById("declineButton");
+        const participateButton = document.getElementById("participateButton");
+        const pendingButton = document.getElementById("pendingButton");
+        const confirmDeclineButton = document.getElementById(
+          "confirmDeclineButton"
+        );
+        const confirmPendingButton = document.getElementById(
+          "confirmPendingButton"
         );
         const cancelDeclineButton = document.getElementById(
           "cancelDeclineButton"
@@ -2566,10 +2770,15 @@
         declineReasonLabel.classList.add("hidden");
         declineReasonTextarea.classList.add("hidden");
         declineReasonTextarea.value = ""; // Clear input
+        pendingReasonLabel.classList.add("hidden");
+        pendingReasonTextarea.classList.add("hidden");
+        pendingReasonTextarea.value = ""; // Clear input
 
         declineButton.classList.remove("hidden");
         participateButton.classList.remove("hidden");
+        pendingButton.classList.remove("hidden");
         confirmDeclineButton.classList.add("hidden");
+        confirmPendingButton.classList.add("hidden");
         cancelDeclineButton.classList.add("hidden");
       }
 
@@ -2599,6 +2808,14 @@
           const reason = document.getElementById("declineReason").value;
           if (!reason) {
             showMessageBox("필수 입력", "불참 사유를 입력해주세요.");
+            return;
+          }
+          currentUserParticipation.reason = reason;
+        } else if (status === "보류") {
+          // Handle '보류' status
+          const reason = document.getElementById("pendingReason").value;
+          if (!reason) {
+            showMessageBox("필수 입력", "보류 사유를 입력해주세요.");
             return;
           }
           currentUserParticipation.reason = reason;
@@ -3521,11 +3738,23 @@
         }
 
         currentGroup.expenses.forEach((expense) => {
-          const currentUserPaid = expense.payers.find(
+          const currentUserPayer = expense.payers.find(
             (p) => p.userId === mockData.currentUser.id
-          )?.paid;
-          const paidStatusText = currentUserPaid ? "제출 완료" : "미제출";
-          const paidStatusClass = currentUserPaid ? "paid" : "unpaid";
+          );
+          const paidStatusText = currentUserPayer
+            ? currentUserPayer.status === "paid"
+              ? "제출 완료"
+              : currentUserPayer.status === "pending"
+              ? "보류"
+              : "미제출"
+            : "미제출"; // Use status
+          const paidStatusClass = currentUserPayer
+            ? currentUserPayer.status === "paid"
+              ? "paid"
+              : currentUserPayer.status === "pending"
+              ? "on-hold"
+              : "unpaid"
+            : "unpaid"; // Use status
 
           const expenseCard = document.createElement("div");
           expenseCard.className = "card";
@@ -3542,8 +3771,15 @@
                           expense.id
                         }')">상세 보기</button>
                         ${
-                          !currentUserPaid
+                          currentUserPayer &&
+                          currentUserPayer.status === "unpaid"
                             ? `<button class="btn btn-green" onclick="markExpensePaid('${expense.id}')">제출 완료</button>`
+                            : ""
+                        }
+                        ${
+                          currentUserPayer &&
+                          currentUserPayer.status === "unpaid"
+                            ? `<button class="btn btn-outline" onclick="openExpensePendingModal('${expense.id}')">납부 보류</button>`
                             : ""
                         }
                     </div>
@@ -3563,30 +3799,51 @@
         currentGroup.members.forEach((memberId) => {
           const payer = expense.payers.find((p) => p.userId === memberId);
           const paidStatus = payer ? payer.paid : false; // Default to false if not found
-          const statusText = paidStatus ? "제출 완료" : "미제출"; // Defined statusText here
-          const statusClass = paidStatus ? "paid" : "unpaid";
+          const statusText = payer
+            ? payer.status === "paid"
+              ? "제출 완료"
+              : payer.status === "pending"
+              ? "보류"
+              : "미제출"
+            : "미제출"; // Use status
+          const statusClass = payer
+            ? payer.status === "paid"
+              ? "paid"
+              : payer.status === "pending"
+              ? "on-hold"
+              : "unpaid"
+            : "unpaid"; // Use status
           const nagKey = `nag-expense-${expense.id}-${memberId}`;
           const canNag =
             !lastNagTimes[nagKey] ||
             Date.now() - lastNagTimes[nagKey] > COOLDOWN_DURATION;
           const nagButtonHtml =
-            !paidStatus && canNag
+            payer && payer.status !== "paid" && canNag // Nag if not paid and not on cooldown
               ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2" onclick="nagPayer('${expense.id}', '${memberId}')">🛎️ 재촉</button>`
-              : !paidStatus && !canNag
+              : payer && payer.status !== "paid" && !canNag
               ? `<button class="btn btn-outline text-xs py-1 px-2 ml-2 opacity-50 cursor-not-allowed" disabled>🛎️ 재촉 (쿨다운)</button>`
               : "";
           payersHtml += `<li><strong>${getUserNameById(
             memberId
-          )}</strong>: <span class="status-badge ${statusClass}">${statusText}</span>${nagButtonHtml}</li>`; // Used statusText
+          )}</strong>: <span class="status-badge ${statusClass}">${statusText}</span>${
+            payer && payer.status === "pending"
+              ? ` (사유: ${payer.reason})`
+              : ""
+          }${nagButtonHtml}</li>`; // Used statusText and reason
         });
         payersHtml += "</ul>";
 
-        const currentUserPaid = expense.payers.find(
+        const currentUserPayer = expense.payers.find(
           (p) => p.userId === mockData.currentUser.id
-        )?.paid;
-        const markPaidButtonHtml = !currentUserPaid
-          ? `<button class="btn btn-green" onclick="markExpensePaid('${expense.id}')">제출 완료</button>`
-          : "";
+        );
+        const markPaidButtonHtml =
+          currentUserPayer && currentUserPayer.status !== "paid"
+            ? `<button class="btn btn-green" onclick="markExpensePaid('${expense.id}')">제출 완료</button>`
+            : "";
+        const pendingButtonHtml =
+          currentUserPayer && currentUserPayer.status !== "paid"
+            ? `<button class="btn btn-outline" onclick="openExpensePendingModal('${expense.id}')">납부 보류</button>`
+            : "";
 
         const bankInfoHtml = expense.bankAccount
           ? `
@@ -3626,6 +3883,7 @@
                 </div>
                 <div class="flex gap-2 mt-4">
                     ${markPaidButtonHtml}
+                    ${pendingButtonHtml}
                     <button class="btn btn-outline text-sm py-1 px-3" onclick="copyScheduleLink('expense', '${
                       expense.id
                     }')">공유</button>
@@ -3671,6 +3929,8 @@
           payers: currentGroup.members.map((userId) => ({
             userId: userId,
             paid: false,
+            status: "unpaid", // Default status for new expense
+            reason: "",
           })),
         };
 
@@ -3691,13 +3951,75 @@
             (p) => p.userId === mockData.currentUser.id
           );
           if (!payer) {
-            payer = { userId: mockData.currentUser.id, paid: false };
+            payer = {
+              userId: mockData.currentUser.id,
+              paid: false,
+              status: "unpaid",
+              reason: "",
+            };
             expense.payers.push(payer);
           }
           payer.paid = true;
+          payer.status = "paid";
+          payer.reason = "";
           showMessageBox("성공", "회비 제출이 완료되었습니다.");
           renderExpenses(); // Re-render to reflect changes
         }
+      }
+
+      // --- Expense Pending Functions ---
+      let expensePendingExpenseId = null;
+      function openExpensePendingModal(expenseId) {
+        expensePendingExpenseId = expenseId;
+        const expense = currentGroup.expenses.find((e) => e.id === expenseId);
+        if (!expense) {
+          showMessageBox("오류", "회비 항목을 찾을 수 없습니다.");
+          return;
+        }
+        document.getElementById(
+          "expensePendingInfo"
+        ).textContent = `'${expense.name}' 납부를 보류하시겠습니까?`;
+        document.getElementById("expensePendingReason").value =
+          expense.payers.find((p) => p.userId === mockData.currentUser.id)
+            ?.reason || "";
+        openModal("expensePendingModal");
+      }
+
+      function handleExpensePending() {
+        if (!expensePendingExpenseId) return;
+
+        const expense = currentGroup.expenses.find(
+          (e) => e.id === expensePendingExpenseId
+        );
+        if (!expense) return;
+
+        const pendingReason = document.getElementById(
+          "expensePendingReason"
+        ).value;
+        if (!pendingReason) {
+          showMessageBox("필수 입력", "보류 사유를 입력해주세요.");
+          return;
+        }
+
+        let payer = expense.payers.find(
+          (p) => p.userId === mockData.currentUser.id
+        );
+        if (!payer) {
+          payer = {
+            userId: mockData.currentUser.id,
+            paid: false,
+            status: "unpaid",
+            reason: "",
+          };
+          expense.payers.push(payer);
+        }
+        payer.status = "pending";
+        payer.reason = pendingReason;
+
+        closeModal("expensePendingModal");
+        showMessageBox("성공", `회비 납부가 '보류' 상태로 업데이트되었습니다.`);
+        renderExpenses();
+        expensePendingExpenseId = null;
       }
 
       // --- Nag Functions ---
@@ -3861,6 +4183,7 @@
           categories: selectedCategories,
           meetings: [],
           travels: [],
+          comments: [],
           birthdays: [],
           expenses: [],
           birthdayAssignmentHistory: [],
